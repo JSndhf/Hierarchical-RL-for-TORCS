@@ -5,8 +5,8 @@
 
  ***************************************************************************/
 
-#ifndef RLDRIVER_H_
-#define RLDRIVER_H_
+#ifndef HRLDRIVER_H_
+#define HRLDRIVER_H_
 
 #include "BaseDriver.h"
 #include "CarState.h"
@@ -14,10 +14,10 @@
 #include "SimpleParser.h"
 #include "WrapperBaseDriver.h"
 
-#include "treeNodes.h"
-#include "staticTasks.h"
-#include "envControl.h"
-#include "dataHandler.h"
+#include "DiscreteFeatures.h"
+#include "TreeNodes.h"
+#include "EnvControl.h"
+#include "DataHandler.h"
 
 #include <vector>
 #include <memory>
@@ -34,21 +34,23 @@
 
 using namespace std;
 
-class rlDriver:public WrapperBaseDriver {
+class HRLDriver:public WrapperBaseDriver {
   private:
-    shared_ptr<iTask> _taskTree;
-    envControl _env;
-    dataHandler _data;
+    shared_ptr<Task> _rootTask;
+    EnvControl _env;
+    DataHandler _data;
+    DiscreteFeatures _lastState;
+    vector<char> _lastActionStack;
   public:
     /* Constructor - includes creating the envControl and taskTree,
        as well as preparing file handling and logging.*/
-    rlDriver();
+    HRLDriver();
     /* Destructor */
-    ~rlDriver(){};
+    ~HRLDriver(){};
     // Initialization with optional experience import
-  	virtual void init(float *angles, string expFilePath);
+  	virtual void init(float *, string);
 
-    virtual CarControl wDrive(CarState cs);
+    virtual CarControl wDrive(CarState);
 
   	// Print a shutdown message
   	virtual void onShutdown();
@@ -57,7 +59,7 @@ class rlDriver:public WrapperBaseDriver {
   	virtual void onRestart();
 };
 
-#endif /*RLDRIVER_H_*/
+#endif /*HRLDRIVER_H_*/
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *

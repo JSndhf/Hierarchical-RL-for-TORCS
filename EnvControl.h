@@ -10,43 +10,52 @@
 
 #include "CarState.h"
 
+#include "DiscreteFeatures.h"
 #include "treeNodes.h"
 
 #include <string>
+#include <sstream>
+#include <iomanip>
+#include <vector>
+
+// Parameters for termination control
+#define STUCK_MAX_GAMETICKS     25
+#define TRACKLEAVE_RIGHT        -1.2
+#define TRACKLEAVE_LEFT         1.2
 
 using namespace std;
 
 /* Discretizations for feature values */
 
-class envControl {
+class EnvControl {
   private:
     unsigned int _episodeCnt;
     unsigned int _maxEpisodes;
-    string _currentFeatureSpace;
     CarState _lastState;
+    CarControl _lastActions;
     /* Check for termination conditions */
     unsigned int _stuckWatchdog;
     bool _isStuck;
     bool _isTerminated;
-    void _checkConditions(CarState cs);
+    void _checkConditions(CarState& cs);
   public:
     /* Constructor */
-    envControl(unsigned int maxEpisodes):
-        _episodeCnt(0),_maxEpisodes(maxEpisodes),_stuckWatchdog(0){};
+    EnvControl(unsigned int maxEpisodes):
+        _episodeCnt(0),_maxEpisodes(maxEpisodes),_stuckWatchdog(0),_isStuck(false),_isTerminated(false){};
     /* Destructor */
-    ~envControl(){};
+    ~EnvControl(){};
     /* Calculates the feature values given the current CarState */
-    void buildFeatures(CarState cs);
+    discreteFeatures getFeatures(CarState& cs);
 
     /* Returns part of the full feature vector to be used in the particular task */
-    string getTaskFeatures(string taskID);
+    string getTaskFeatureString(shared_ptr<iTask> task, DiscreteFeatures& fullFeatures);
     /* Returns the actions available (based on the feature values) for the task */
-    string getAllowedActions(string taskID, string featureValues);
+    vector<shared_ptr<iTask>> getAllowedActions(shared_ptr<iTask> task, DiscreteFeatures& fullFeatures);
     /* Returns the overall MDP reward */
-    double getAbstractReward(CarState cs);
+    double getAbstractReward(CarState& cs);
 
     /* Returns the control actions based on the root task decision or termination */
-    CarControl getActions();
+    CarControl getActions(shared_ptr<iTask> a);
 };
 
 

@@ -1,4 +1,4 @@
-#include "dataHandler.h"
+#include "DataHandler.h"
 
 /*** getDynamicTasks *************************************************
     Loops through the given taskTree, returning those children who
@@ -8,20 +8,20 @@
     must be assured, these objects exist longer than the usage of the
     returned vector.
 ********************************************************************/
-vector<shared_ptr<iTask>> dataHandler::_getDynamicTasks(shared_ptr<iTask> rootTask){
-    vector<shared_ptr<iTask>> dynChildren;
+vector<shared_ptr<Task>> DataHandler::_getDynamicTasks(shared_ptr<Task> rootTask){
+    vector<shared_ptr<Task>> dynChildren;
     // The first node is the root node of the task tree.
     // First, get its children and call getDynamicTasks recursively
     // to take their children into account, too.
     int childCnt = rootTask->children.size();
     int ccnt;
     for(ccnt = 0; ccnt < childCnt; ccnt++){
-        shared_ptr<iTask> child = rootTask->children[ccnt];
+        shared_ptr<Task> child = rootTask->children[ccnt];
         if (!child->isStatic && !child->isPrimitive){
             // Add the child to the overall vector
             dynChildren.push_back(child);
             // Now do a recursive call to get childs children and append the
-            vector<shared_ptr<iTask>> dynGrandchildren = dataHandler::_getDynamicTasks(child);
+            vector<shared_ptr<Task>> dynGrandchildren = DataHandler::_getDynamicTasks(child);
             dynChildren.insert(dynChildren.end(), dynGrandchildren.begin(), dynGrandchildren.end());
         }
     }
@@ -37,9 +37,9 @@ vector<shared_ptr<iTask>> dataHandler::_getDynamicTasks(shared_ptr<iTask> rootTa
     assured outside of the function, that the objects pointed to still
     exist.
 ********************************************************************/
-shared_ptr<iTask> _findTaskInTree(shared_ptr<iTask> rootTask, char id){
+shared_ptr<Task> DataHandler::_findTaskInTree(shared_ptr<Task> rootTask, char id){
     int cnt;
-    shared_ptr<iTask> childMatch;
+    shared_ptr<Task> childMatch;
     // Check if the current task matches the searched id
     if(rootTask->id == id){
         return rootTask;
@@ -47,12 +47,12 @@ shared_ptr<iTask> _findTaskInTree(shared_ptr<iTask> rootTask, char id){
         // Check if the rootTask has children and try to find the id in them
         if(rootTask->children.size()){
             for(cnt = 0; cnt < rootTask->children.size(); cnt++){
-                childMatch = dataHandler::_findTaskInTree(&rootTask->children[cnt], id);
-                if(childMatch != NULL) break;
+                childMatch = DataHandler::_findTaskInTree(rootTask->children[cnt], id);
+                if(childMatch != nullptr) break;
             }
             return childMatch;
         } else {
-            return NULL;
+            return nullptr;
         }
     }
 }
@@ -61,7 +61,7 @@ shared_ptr<iTask> _findTaskInTree(shared_ptr<iTask> rootTask, char id){
     Creates a pugixml document in memory and stores it in the default
     location in the application folder.
 ********************************************************************/
-bool dataHandler::storeExperience(shared_ptr<iTask> taskTree){
+bool DataHandler::storeExperience(shared_ptr<Task> taskTree){
     // Create a new xml document to contain the experience
     pugi::xml_document xmlDoc;
     // Generate XML declaration
@@ -72,7 +72,7 @@ bool dataHandler::storeExperience(shared_ptr<iTask> taskTree){
     // A valid XML doc must contain a single root node of any name
     auto xmlRoot = xmlDoc.append_child("dynTasks");
     // Get a vector of all dynamic tasks in the taskTree
-    vector<shared_ptr<iTask>> dynTasks = dataHandler::_getDynamicTasks(&taskTree);
+    vector<shared_ptr<Task>> dynTasks = dataHandler::_getDynamicTasks(taskTree);
     // Iterate through the tasks and store their experience one after another
     int tCnt, expCnt;
     map<string, array<double, 2> > cvals;
@@ -93,14 +93,14 @@ bool dataHandler::storeExperience(shared_ptr<iTask> taskTree){
     }
     // Now xmlDoc and namely the root node contains all dynamic tasks data
     // Write out the data structure.
-    return xmlDoc.save_file("data/rlDriverData.xml");
+    return xmlDoc.save_file("data/HRLDriverData.xml");
 };
 
 /*** loadExperience ************************************************
     Loads a pugixml document in memory, loops through all nodes and
     copy the C-values in the given taskTree
 ********************************************************************/
-bool dataHandler::loadExperience(string srcPath, shared_ptr<iTask> taskTree){
+bool DataHandler::loadExperience(string srcPath, shared_ptr<Task> taskTree){
     string searchStr;
     // Load xml file
     pugi::xml_document xmlDoc;
@@ -127,8 +127,8 @@ bool dataHandler::loadExperience(string srcPath, shared_ptr<iTask> taskTree){
     for (pugi::xpath_node n: xmlRoot.select_nodes("taskNode")){
         pugi::xml_node xmlTask = n.node();
         // Find the task in the task tree with the same id
-        iTask* task = dataHandler::_findTaskInTree(&taskTree, (char) xmlNode.attribute("intVal").as_int());
-        if(task != NULL){
+        <shared_ptr<Task>> task = DataHandler::_findTaskInTree(taskTree, (char) xmlNode.attribute("intVal").as_int());
+        if(task != nullptr){
             // For all child nodes (representing the cvals) insert their values into
             // the tasks cval vector.
             for(pugi::xpath_node c: xmlTask.select_nodes("cValNode")){
@@ -145,10 +145,10 @@ bool dataHandler::loadExperience(string srcPath, shared_ptr<iTask> taskTree){
 
 }
 
-void dataHandler::createStatistics(){
+void DataHandler::createStatistics(){
 
 };
 
-void dataHandler::updateStatistics(double totalEpisodeReward, double totalEpisodeDistance){
+void DataHandler::updateStatistics(double totalEpisodeReward, double totalEpisodeDistance){
 
 };

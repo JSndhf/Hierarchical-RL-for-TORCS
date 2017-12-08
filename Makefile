@@ -5,7 +5,7 @@ CPPFLAGS      = -std=c++11 -Wall -g
 #CPPFLAGS      = -std=c++11 -Wall -g -D __UDP_CLIENT_VERBOSE__
 
 #Put here the name of your driver class
-DRIVER_CLASS = rlDriver
+DRIVER_CLASS = HRLDriver
 #Put here the filename of your driver class header
 DRIVER_INCLUDE = '"$(DRIVER_CLASS).h"'
 DRIVER_OBJ = $(DRIVER_CLASS).o

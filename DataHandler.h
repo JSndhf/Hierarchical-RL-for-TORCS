@@ -14,25 +14,25 @@
 #include <memory>
 #include <array>
 
-#include "treeNodes.h"
+#include "TreeNodes.h"
 
 using namespace std;
 
-class dataHandler {
+class DataHandler {
   private:
     int _monitorFileHandle;
-    vector<shared_ptr<iTask>> _getDynamicTasks(shared_ptr<iTask> rootTask);
-    shared_ptr<iTask> _findTaskInTree(shared_ptr<iTask> rootTask);
+    vector<shared_ptr<Task>> _getDynamicTasks(shared_ptr<Task>);
+    shared_ptr<Task> _findTaskInTree(shared_ptr<Task>, char);
   public:
     /* Constructor */
-    dataHandler(){};
+    DataHandler();
     /* Destructor */
-    ~dataHandler(){};
-    bool storeExperience(shared_ptr<iTask> taskTree);
-    void loadExperience(string srcPath, shared_ptr<iTask> taskTree);
+    ~DataHandler();
+    bool storeExperience(shared_ptr<Task>);
+    void loadExperience(string, shared_ptr<Task>);
 
     void createStatistics();
-    void updateStatistics(double totalEpisodeReward, double totalEpisodeDistance);
+    void updateStatistics(double, double);
 };
 
 #endif /*DATAHANDLER_H_*/
