@@ -46,7 +46,7 @@ class HRLDriver:public WrapperBaseDriver {
        as well as preparing file handling and logging.*/
     HRLDriver();
     /* Destructor */
-    ~HRLDriver(){};
+    ~HRLDriver();
     // Initialization with optional experience import
   	virtual void init(float *, string);
 

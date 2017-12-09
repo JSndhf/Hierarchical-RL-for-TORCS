@@ -20,6 +20,8 @@ class DiscreteFeatures {
     trackPos_t trackPos;
     rpm_t rpm;
     int gear;
+    DiscreteFeatures();
+    ~DiscreteFeatures();
 };
 
 #endif /*DISCRETEFEATURES_H_*/

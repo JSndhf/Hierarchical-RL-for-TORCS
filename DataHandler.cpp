@@ -1,5 +1,8 @@
 #include "DataHandler.h"
 
+DataHandler::DataHandler(){};
+DataHandler::~DataHandler(){};
+
 /*** getDynamicTasks *************************************************
     Loops through the given taskTree, returning those children who
     themself are dynamic tasks. This is meant to be used recursively
@@ -8,8 +11,8 @@
     must be assured, these objects exist longer than the usage of the
     returned vector.
 ********************************************************************/
-vector<shared_ptr<Task>> DataHandler::_getDynamicTasks(shared_ptr<Task> rootTask){
-    vector<shared_ptr<Task>> dynChildren;
+vector<shared_ptr<DynamicTask>> DataHandler::_getDynamicTasks(shared_ptr<Task> rootTask){
+    vector<shared_ptr<DynamicTask>> dynChildren;
     // The first node is the root node of the task tree.
     // First, get its children and call getDynamicTasks recursively
     // to take their children into account, too.
@@ -19,9 +22,9 @@ vector<shared_ptr<Task>> DataHandler::_getDynamicTasks(shared_ptr<Task> rootTask
         shared_ptr<Task> child = rootTask->children[ccnt];
         if (!child->isStatic && !child->isPrimitive){
             // Add the child to the overall vector
-            dynChildren.push_back(child);
+            dynChildren.push_back(dynamic_pointer_cast<DynamicTask>(child));
             // Now do a recursive call to get childs children and append the
-            vector<shared_ptr<Task>> dynGrandchildren = DataHandler::_getDynamicTasks(child);
+            vector<shared_ptr<DynamicTask>> dynGrandchildren = DataHandler::_getDynamicTasks(child);
             dynChildren.insert(dynChildren.end(), dynGrandchildren.begin(), dynGrandchildren.end());
         }
     }
@@ -38,7 +41,7 @@ vector<shared_ptr<Task>> DataHandler::_getDynamicTasks(shared_ptr<Task> rootTask
     exist.
 ********************************************************************/
 shared_ptr<Task> DataHandler::_findTaskInTree(shared_ptr<Task> rootTask, char id){
-    int cnt;
+    unsigned int cnt;
     shared_ptr<Task> childMatch;
     // Check if the current task matches the searched id
     if(rootTask->id == id){
@@ -72,22 +75,22 @@ bool DataHandler::storeExperience(shared_ptr<Task> taskTree){
     // A valid XML doc must contain a single root node of any name
     auto xmlRoot = xmlDoc.append_child("dynTasks");
     // Get a vector of all dynamic tasks in the taskTree
-    vector<shared_ptr<Task>> dynTasks = dataHandler::_getDynamicTasks(taskTree);
+    vector<shared_ptr<DynamicTask>> dynTasks = DataHandler::_getDynamicTasks(taskTree);
     // Iterate through the tasks and store their experience one after another
-    int tCnt, expCnt;
+    unsigned int tCnt;
     map<string, array<double, 2> > cvals;
     for(tCnt = 0; tCnt < dynTasks.size(); tCnt++){
         auto taskNode = xmlRoot.append_child("taskNode");
         taskNode.append_attribute("id") = dynTasks[tCnt]->id;
         // For each experience create a xml node and store the C and C~ values in it
-        for(expCnt = 0; expCnt < cvals.size(); expCnt++){
+        for(auto const &cval : dynTasks[tCnt]->cvals){
             auto expNode = taskNode.append_child("cValNode");
-            expNode.append_attribute("sa") = dynTasks[tCnt]->cvals[expCnt].first.c_str();
+            expNode.append_attribute("sa") = cval.first.c_str();
             expNode.append_child(pugi::node_pcdata).set_value(
-                    to_string(dynTasks[tCnt]->cvals[expCnt].second[0]).c_str()
+                    to_string(cval.second[0]).c_str()
                 );
             expNode.append_child(pugi::node_pcdata).set_value(
-                    to_string(dynTasks[tCnt]->cvals[expCnt].second[1]).c_str()
+                    to_string(cval.second[1]).c_str()
                 );
         }
     }
@@ -104,7 +107,7 @@ bool DataHandler::loadExperience(string srcPath, shared_ptr<Task> taskTree){
     string searchStr;
     // Load xml file
     pugi::xml_document xmlDoc;
-    pugi::xml_parse_result result = doc.load_file(srcPath.c_str(),
+    pugi::xml_parse_result result = xmlDoc.load_file(srcPath.c_str(),
         pugi::parse_default|pugi::parse_declaration);
     // Do a rudimentary compliance check
         // Is the file correct xml?
@@ -116,7 +119,7 @@ bool DataHandler::loadExperience(string srcPath, shared_ptr<Task> taskTree){
         // Is there at least one taskNode in the structure?
         searchStr = "taskNode";
         pugi::xpath_node xpathRootNode = xmlRoot.select_single_node(searchStr.c_str());
-        if (!xpathNode){
+        if (!xpathRootNode){
             cout << "Failed to load experience - no tasks found in the XML." << endl;
             return false;
         }
@@ -127,16 +130,19 @@ bool DataHandler::loadExperience(string srcPath, shared_ptr<Task> taskTree){
     for (pugi::xpath_node n: xmlRoot.select_nodes("taskNode")){
         pugi::xml_node xmlTask = n.node();
         // Find the task in the task tree with the same id
-        <shared_ptr<Task>> task = DataHandler::_findTaskInTree(taskTree, (char) xmlNode.attribute("intVal").as_int());
+        shared_ptr<DynamicTask> task = dynamic_pointer_cast<DynamicTask>(
+              DataHandler::_findTaskInTree(taskTree, (char) xmlTask.attribute("intVal").as_int()));
         if(task != nullptr){
             // For all child nodes (representing the cvals) insert their values into
             // the tasks cval vector.
             for(pugi::xpath_node c: xmlTask.select_nodes("cValNode")){
                 pugi::xml_node xmlCValNode = c.node();
                 pugi::xpath_node_set cvalSet = xmlCValNode.select_nodes("text()");
-                task->cvals.insert(
-                        xmlCValNode.attribute("as").value(),
-                        {{ cvalSet[0].node().as_double(), cvalSet[1].node().as_double() }}
+                task->cvals.insert(pair<string, array<double, 2>>(
+                        (string) xmlCValNode.attribute("as").value(),
+                        array<double, 2>
+                          {{ cvalSet[0].node().text().as_double(), cvalSet[1].node().text().as_double() }}
+                        )
                     );
             }
         }

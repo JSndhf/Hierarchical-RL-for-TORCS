@@ -12,7 +12,7 @@ DRIVER_OBJ = $(DRIVER_CLASS).o
 
 EXTFLAGS = -D __DRIVER_CLASS__=$(DRIVER_CLASS) -D __DRIVER_INCLUDE__=$(DRIVER_INCLUDE)
 
-OBJECTS = WrapperBaseDriver.o SimpleParser.o CarState.o CarControl.o $(DRIVER_OBJ)
+OBJECTS = WrapperBaseDriver.o SimpleParser.o CarState.o CarControl.o TreeNodes.o DiscreteFeatures.o EnvControl.o pugixml.o DataHandler.o $(DRIVER_OBJ)
 
 all: $(OBJECTS) client
 

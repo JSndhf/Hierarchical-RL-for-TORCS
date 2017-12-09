@@ -8,11 +8,12 @@
 #ifndef DATAHANDLER_H_
 #define DATAHANDLER_H_
 
-#include "lib/pugixml.hpp"
+#include "pugixml.hpp"
 #include <map>
 #include <vector>
 #include <memory>
 #include <array>
+#include <iostream>
 
 #include "TreeNodes.h"
 
@@ -21,7 +22,7 @@ using namespace std;
 class DataHandler {
   private:
     int _monitorFileHandle;
-    vector<shared_ptr<Task>> _getDynamicTasks(shared_ptr<Task>);
+    vector<shared_ptr<DynamicTask>> _getDynamicTasks(shared_ptr<Task>);
     shared_ptr<Task> _findTaskInTree(shared_ptr<Task>, char);
   public:
     /* Constructor */
@@ -29,7 +30,7 @@ class DataHandler {
     /* Destructor */
     ~DataHandler();
     bool storeExperience(shared_ptr<Task>);
-    void loadExperience(string, shared_ptr<Task>);
+    bool loadExperience(string, shared_ptr<Task>);
 
     void createStatistics();
     void updateStatistics(double, double);

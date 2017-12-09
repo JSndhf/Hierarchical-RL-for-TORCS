@@ -1,5 +1,11 @@
 #include "EnvControl.h"
 
+EnvControl::EnvControl(unsigned int maxEpisodes):
+    _episodeCnt(0),_maxEpisodes(maxEpisodes),_stuckWatchdog(0),_isStuck(false),
+    _isTerminated(false),_lastState(CarState()),_lastActions(CarControl()){};
+
+EnvControl::~EnvControl(){};
+
 void EnvControl::_checkConditions(CarState& cs){
     // Check if the car is stuck right now (no movement and/or an angle greater
     // 45 degrees (pi/4) as in [Karavolos 2013])
@@ -18,8 +24,8 @@ void EnvControl::_checkConditions(CarState& cs){
 /* ----- Ideas for improvement:
           - sliding window over cs to avoid glitches
    -----*/
-discreteFeatures EnvControl::getFeatures(CarState& cs){
-    discreteFeatures dPhi;
+DiscreteFeatures EnvControl::getFeatures(CarState& cs){
+    DiscreteFeatures dPhi;
     /***** Speed *************************************************************/
     double speedx = cs.getSpeedX();
     double speed = cs.getSpeedY();
@@ -29,8 +35,8 @@ discreteFeatures EnvControl::getFeatures(CarState& cs){
     // state  | V0 | V1   | V2    | V3    | V4    | V5    | V6    | V7     | V8      | V9      | V10     | V11     | V12     | V13     | V14
 
     // Leverage the implementation of enum as integer and bool true as 1
-    dPhi.speed = ( (speed > 0) + (speed > 10) + (speed > 20) + (speed > 30)
-                    + (speed > 40) + (speed > 50) + (speed > 75) + (speed > 100)
+    dPhi.speed = (DiscreteFeatures::speed_t) ( (speed > 0) + (speed > 10) + (speed > 20)
+                    + (speed > 30) + (speed > 40) + (speed > 50) + (speed > 75) + (speed > 100)
                     + (speed > 125) + (speed > 150) + (speed > 175) + (speed > 200)
                     + (speed > 240) + (speed > 80));
     /***** Curvature *********************************************************/
@@ -42,37 +48,38 @@ discreteFeatures EnvControl::getFeatures(CarState& cs){
     double distanceSum = 0;
     for(int sens = 2; sens < 17; sens++){
         res = cs.getTrack(sens);
-        angleDistanceSum += tmp * sensorAngles[sens-2];
-        distanceSum += tmp;
+        angleDistanceSum += res * sensorAngles[sens-2];
+        distanceSum += res;
     }
     res = angleDistanceSum / distanceSum;
     // Discretization table:
     // curvature | <(-60) | (-60)-(-45) | (-45)-(-30) | (-30)-(-22.5) | (-22.5)-(-15) | (-15)-(-7.5) | (-7.5)-7.5 | 7.5-15 | 15-22.5 | 22.5-30 | 30-45 | 45-60 | >60
     // state     | CL6    | CL5         | CL4         | CL3           | CL2           | CL1          | C0         | CR1    | CR2     | CR3     | CR4   | CR5   | CR6
-    dPhi.curvature = ( (res > -60.0) + (res > -45.0) + (res > -30.0) + (res > -22.5)
-                        + (res > -15.0) + (res > -7.5) + (res > 7.5) + (res > 15.0)
-                        + (res > 22.5) + (res > 30.0) + (res > 45.0) + (res > 60.0));
+    dPhi.curvature = (DiscreteFeatures::curvature_t) ( (res > -60.0) + (res > -45.0)
+                        + (res > -30.0) + (res > -22.5) + (res > -15.0) + (res > -7.5)
+                        + (res > 7.5) + (res > 15.0) + (res > 22.5) + (res > 30.0)
+                        + (res > 45.0) + (res > 60.0));
     /***** TrackPos **********************************************************/
     double pos = cs.getTrackPos();
     // Discretization table:
     // pos   | >1.0 | 1.0-0.8 | 0.8-0.6 | 0.6-0.4 | 0.4-0.2 | 0.2-(-0.2) | (-0.2)-(-0.4) | (-0.4)-(-0.6) | (-0.6)-(-0.8) | (-0.8)-(-1.0) | <-1.0
     // state | PL5  | PL4     | PL3     | PL2     | PL1     | P0         | PR1           | PR2           | PR3           | PR4           | PR5
-    dPhi.trackPos = ( (pos < 1.0) + (pos < 0.8) + (pos < 0.6) + (pos < 0.4)
-                      + (pos < 0.2) + (pos < -0.2) + (pos < -0.4) + (pos < -0.6)
-                      + (pos < -0.8) + (pos < -1.0));
+    dPhi.trackPos = (DiscreteFeatures::trackPos_t) ( (pos < 1.0) + (pos < 0.8)
+                      + (pos < 0.6) + (pos < 0.4) + (pos < 0.2) + (pos < -0.2)
+                      + (pos < -0.4) + (pos < -0.6) + (pos < -0.8) + (pos < -1.0));
     /***** RPM ***************************************************************/
     int rrpm = cs.getRpm();
     // Discretization table (following [Karavolos 2013]):
     // rpm   | 0-2k | 2-3k | 3-4k | 4-5k | 5-6.3k | 6.3-7.3k | 7.3-8k | 8-9.5k | >9.5k
     // state | RPM0 | RPM1 | RPM2 | RPM3 | RPM4   | RPM5     | RPM6   | RPM7   | RPM8
-    dPhi.rpm = ( (rrpm > 2000) + (rrpm > 3000) + (rrpm > 4000) + (rrpm > 5000)
-                 + (rrpm > 6300) + (rrpm > 7300) + (rrpm > 8000) + (rrpm > 9300));
+    dPhi.rpm = (DiscreteFeatures::rpm_t) ( (rrpm > 2000) + (rrpm > 3000) + (rrpm > 4000)
+                + (rrpm > 5000) + (rrpm > 6300) + (rrpm > 7300) + (rrpm > 8000) + (rrpm > 9300));
     /***** Gear **************************************************************/
     dPhi.gear = cs.getGear();
 };
 
 /* Returns part of the full feature vector to be used in the particular task */
-string EnvControl::getTaskFeatureString(shared_ptr<iTask> task, discreteFeatures& fullFeatures){
+string EnvControl::getTaskFeatureString(shared_ptr<Task> task, DiscreteFeatures& fullFeatures){
     // For each task only a portion of the full set of features may be relevant.
     // Also, to ease up further processing, convert the dicrete feature values
     // internally stored as ints in the enum to a hex string.
@@ -101,37 +108,38 @@ string EnvControl::getTaskFeatureString(shared_ptr<iTask> task, discreteFeatures
     }
 };
 /* Returns the actions available (based on the feature values) for the task */
-vector<shared_ptr<iTask>> EnvControl::getAllowedActions(shared_ptr<iTask> task, discreteFeatures& fullFeatures){
+vector<shared_ptr<Task>> EnvControl::getAllowedActions(shared_ptr<Task> task, DiscreteFeatures& fullFeatures){
     // Basically the constraints on each task can be enforced here.
     // If no constraints can be made to shrink the state-action space, all actions are returned.
-    vector<shared_ptr<iTask>> aAllowed;
+    vector<shared_ptr<Task>> aAllowed;
     // Loop through the tasks attached actions and add only valid ones to aAllowed
     switch(task->id){
         // root constraints:
         case 0:
-            for(shared_ptr<iTask> a : task->children){
+            for(shared_ptr<Task> a : task->children){
                 // Accelerate first if standing still (no gear shifting, no steering)
-                if(fullFeatures.speed == V0 && (a->id == 2 || a->id == 3)) continue;
+                if(fullFeatures.speed == DiscreteFeatures::speed_t::V0 && (a->id == 2 || a->id == 3)) continue;
                 // else
                 aAllowed.push_back(a);
             }
             break;
         // speedCtrl constraints:
         case 1:
-            for(shared_ptr<iTask> a : task->children){
+            for(shared_ptr<Task> a : task->children){
                 // No accelerating if at maximum speed
-                if(fullFeatures.speed == V14 && a->id == 4) continue;
+                if(fullFeatures.speed == DiscreteFeatures::speed_t::V14 && a->id == 4) continue;
                 // No breaking if already standing still
-                if(fullFeatures.speed == V0 && a->id == 6) continue;
+                if(fullFeatures.speed == DiscreteFeatures::speed_t::V0 && a->id == 6) continue;
                 // else
                 aAllowed.push_back(a);
             }
             break;
         // steeringCtrl constraints:
         case 3:
-            for(shared_ptr<iTask> a : task->children){
+            for(shared_ptr<Task> a : task->children){
                 // Force steering in sharp curves
-                if((fullFeatures.curvature <= CL4 || fullFeatures.curvature >= CR4) && a->id == 12) continue;
+                if((fullFeatures.curvature <= DiscreteFeatures::curvature_t::CL4
+                    || fullFeatures.curvature >= DiscreteFeatures::curvature_t::CR4) && a->id == 12) continue;
                 // else
                 aAllowed.push_back(a);
             }
@@ -164,7 +172,7 @@ double EnvControl::getAbstractReward(CarState& cs){
 };
 
 /* Returns the control actions based on the root task decision or termination */
-CarControl EnvControl::getActions(shared_ptr<iTask> a){
+CarControl EnvControl::getActions(shared_ptr<Task> a){
     CarControl cc;
     // Take the last actions as basis - the agent needs to explicitly adjust an
     // action to change behavior. This eases up the sequential decision making for

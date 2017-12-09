@@ -39,7 +39,6 @@ typedef struct sockaddr_in tSockAddrIn;
 class __DRIVER_CLASS__;
 typedef __DRIVER_CLASS__ tDriver;
 
-
 using namespace std;
 
 // Parsing the command line arguments

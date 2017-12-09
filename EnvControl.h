@@ -9,14 +9,17 @@
 #define ENVCONTROL_H_
 
 #include "CarState.h"
+#include "CarControl.h"
 
 #include "DiscreteFeatures.h"
-#include "treeNodes.h"
+#include "TreeNodes.h"
 
 #include <string>
 #include <sstream>
+#include <memory>
 #include <iomanip>
 #include <vector>
+#include <cmath>
 
 // Parameters for termination control
 #define STUCK_MAX_GAMETICKS     25
@@ -37,25 +40,22 @@ class EnvControl {
     unsigned int _stuckWatchdog;
     bool _isStuck;
     bool _isTerminated;
-    void _checkConditions(CarState& cs);
+    void _checkConditions(CarState&);
   public:
-    /* Constructor */
-    EnvControl(unsigned int maxEpisodes):
-        _episodeCnt(0),_maxEpisodes(maxEpisodes),_stuckWatchdog(0),_isStuck(false),_isTerminated(false){};
-    /* Destructor */
-    ~EnvControl(){};
+    EnvControl(unsigned int);
+    ~EnvControl();
     /* Calculates the feature values given the current CarState */
-    discreteFeatures getFeatures(CarState& cs);
+    DiscreteFeatures getFeatures(CarState&);
 
     /* Returns part of the full feature vector to be used in the particular task */
-    string getTaskFeatureString(shared_ptr<iTask> task, DiscreteFeatures& fullFeatures);
+    string getTaskFeatureString(shared_ptr<Task>, DiscreteFeatures&);
     /* Returns the actions available (based on the feature values) for the task */
-    vector<shared_ptr<iTask>> getAllowedActions(shared_ptr<iTask> task, DiscreteFeatures& fullFeatures);
+    vector<shared_ptr<Task>> getAllowedActions(shared_ptr<Task>, DiscreteFeatures&);
     /* Returns the overall MDP reward */
-    double getAbstractReward(CarState& cs);
+    double getAbstractReward(CarState&);
 
     /* Returns the control actions based on the root task decision or termination */
-    CarControl getActions(shared_ptr<iTask> a);
+    CarControl getActions(shared_ptr<Task>);
 };
 
 

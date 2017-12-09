@@ -1,6 +1,7 @@
-#include "rlDriver.h"
+#include "HRLDriver.h"
 
-HRLDriver::HRLDriver():_env(RL_MAX_EPISODES){
+HRLDriver::HRLDriver():
+    _env(EnvControl(RL_MAX_EPISODES)),_data(DataHandler()),_lastState(DiscreteFeatures()){
     // Create the problem specific task tree
     //parallelRoot root;
     /*shared_ptr<iTask> root(new parallelRoot(0));
@@ -35,6 +36,8 @@ HRLDriver::HRLDriver():_env(RL_MAX_EPISODES){
     // Attach the task tree to the driver object
     this->_taskTree = root;*/
 };
+
+HRLDriver::~HRLDriver(){};
 
 void HRLDriver::init(float *angles, string expFilePath){
     // Use the standard angle splitting as in SimpleDriver although not all of
@@ -76,8 +79,9 @@ CarControl HRLDriver::wDrive(CarState cs){
         // Push it to the stack
         currActionStack.push_back(actionOnPath);
         // Do as long as action is not primitive.
-    } while (!actionOnPath->_isPrimitive);
-    // The primitive action now resides at the end of the stack
+    } while (!actionOnPath->isPrimitive);
+    // The primitive action now resides at the end of the stack as well as in
+    // the actionOnPath variable
 
     /********* BACKWARDS LEARNING *********************************************/
     /**************************************************************************/
@@ -88,8 +92,9 @@ CarControl HRLDriver::wDrive(CarState cs){
 
     /********* STORING AND EXECUTING ******************************************/
     /**************************************************************************/
-    // Store the current
+    // Store the current state and action stack
     // Perform the primitive action
+    return this->_env.getActions(actionOnPath);
 };
 
 void HRLDriver::onShutdown(){

@@ -26,7 +26,7 @@ string Task::toString(){
 /*****************************************************************************/
 /****** DYNAMIC TASK IMPLEMENTATION ******************************************/
 /*****************************************************************************/
-DynamicTask(char id, string name, double alphaStart, double gamma, double epsilon, int totalActionCount):
+DynamicTask::DynamicTask(char id, string name, double alphaStart, double gamma, double epsilon, int totalActionCount):
     _alphaStart(alphaStart),_gamma(gamma),_epsilon(epsilon),_totalActionCount(totalActionCount){
         this->id = id; this->name = name; this->isPrimitive = false; this->isStatic = false;
 };
@@ -74,12 +74,12 @@ void DynamicTask::learn(){
 double DynamicTask::getMaxQValue(string featureValues){
     // Loop through the map of cvals and check, if it contains the given feature
     double currBestValue = 0.0;
-    int cnt, aCnt = 0;
-    for(cnt = 0; cnt < this->cvals.size(); cnt++){
+    int aCnt = 0;
+    for(auto const &cval : this->cvals){
         // If all actions possible has been found, the algorithm can stop savely
-        if(this->cvals[cnt].first.contains(featureValues) && aCnt < this->_totalActionCount){
+        if((cval.first.find(featureValues) != string::npos) && aCnt < this->_totalActionCount){
             // If the value is better than the current one, update.
-            currBestValue = this->cvals[cnt].second[0] > currBestValue ? this->cvals[cnt].second[0] : currBestValue;
+            currBestValue = cval.second[0] > currBestValue ? cval.second[0] : currBestValue;
             aCnt++;
         } else {
             break;

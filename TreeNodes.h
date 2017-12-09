@@ -75,7 +75,7 @@ class DynamicTask:public Task {
     virtual void learn();
     virtual double getMaxQValue(string);
     /* Strategy -- MAXNode behavior */
-    virtual void shared_ptr<Task> getActionSelection(string, vector<shared_ptr<Task>>&);
+    virtual shared_ptr<Task> getActionSelection(string, vector<shared_ptr<Task>>&);
 };
 
 /*****************************************************************************/
@@ -99,10 +99,10 @@ class PrimitiveAction: public Task {
 class StaticGearControl: public Task {
   public:
     /* Constructor */
-    virtual StaticGearControl(char id);
+    StaticGearControl(char id);
     /* Destructor */
     virtual ~StaticGearControl();
-    virtual void shared_ptr<Task> getActionSelection(string, vector<shared_ptr<Task>>&);
+    virtual shared_ptr<Task> getActionSelection(string, vector<shared_ptr<Task>>&);
 };
 /*** Static root node ***/
 class StaticRoot: public Task {
@@ -111,7 +111,7 @@ class StaticRoot: public Task {
     StaticRoot(char);
     /* Destructor */
     virtual ~StaticRoot();
-    virtual void shared_ptr<Task> getActionSelection(string, vector<shared_ptr<Task>>&);
+    virtual shared_ptr<Task> getActionSelection(string, vector<shared_ptr<Task>>&);
 };
 
 #endif /*TREENODES_H_*/
