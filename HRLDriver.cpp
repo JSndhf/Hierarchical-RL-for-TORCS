@@ -3,30 +3,29 @@
 HRLDriver::HRLDriver():
     _env(EnvControl(RL_MAX_EPISODES)),_data(DataHandler()),_lastState(DiscreteFeatures()){
     // Create the problem specific task tree
-    //parallelRoot root;
-    /*shared_ptr<iTask> root(new parallelRoot(0));
-    shared_ptr<iTask> speedCtrl(new dynamicTask(1, "speedCtrl", RL_ALPHA_START, RL_GAMMA, RL_EPSILON, 3));
-    shared_ptr<iTask> accel(new primitiveAction(4, "accelerate"));
-    shared_ptr<iTask> idle(new primitiveAction(5, "idle"));
-    shared_ptr<iTask> breakk(new primitiveAction(6, "break"));
+    shared_ptr<Task> root = make_shared<StaticRoot>(0);
+    shared_ptr<Task> speedCtrl = make_shared<DynamicTask>(1, "speedCtrl", RL_ALPHA_START, RL_GAMMA, RL_EPSILON, 3);
+    shared_ptr<Task> accel = make_shared<PrimitiveAction>(4, "accelerate");
+    shared_ptr<Task> idle = make_shared<PrimitiveAction>(5, "idle");
+    shared_ptr<Task> breakk = make_shared<PrimitiveAction>(6, "break");
     speedCtrl->children.push_back(accel);
     speedCtrl->children.push_back(idle);
     speedCtrl->children.push_back(breakk);
     root->children.push_back(speedCtrl);
-    shared_ptr<iTask> gearCtrl(new staticGearControl(2));
-    shared_ptr<iTask> upshift(new primitiveAction(7, "shift up"));
-    shared_ptr<iTask> neutral(new primitiveAction(8, "neural"));
-    shared_ptr<iTask> downshift(new primitiveAction(9, "shift down"));
+    shared_ptr<Task> gearCtrl = make_shared<StaticGearControl>(2);
+    shared_ptr<Task> upshift = make_shared<PrimitiveAction>(7, "shift up");
+    shared_ptr<Task> neutral = make_shared<PrimitiveAction>(8, "neural");
+    shared_ptr<Task> downshift = make_shared<PrimitiveAction>(9, "shift down");
     gearCtrl->children.push_back(upshift);
     gearCtrl->children.push_back(neutral);
     gearCtrl->children.push_back(downshift);
     root->children.push_back(gearCtrl);
-    shared_ptr<iTask> steeringCtrl(new dynamicTask(3, "steeringCtrl", RL_ALPHA_START, RL_GAMMA, RL_EPSILON, 5));
-    shared_ptr<iTask> s1(new primitiveAction(10, "left 0.5"));
-    shared_ptr<iTask> s2(new primitiveAction(11, "left 0.1"));
-    shared_ptr<iTask> s3(new primitiveAction(12, "neutral"));
-    shared_ptr<iTask> s4(new primitiveAction(13, "right 0.1"));
-    shared_ptr<iTask> s5(new primitiveAction(14, "right 0.5"));
+    shared_ptr<Task> steeringCtrl = make_shared<DynamicTask>(3, "steeringCtrl", RL_ALPHA_START, RL_GAMMA, RL_EPSILON, 5);
+    shared_ptr<Task> s1 = make_shared<PrimitiveAction>(10, "left 0.5");
+    shared_ptr<Task> s2 = make_shared<PrimitiveAction>(11, "left 0.1");
+    shared_ptr<Task> s3 = make_shared<PrimitiveAction>(12, "neutral");
+    shared_ptr<Task> s4 = make_shared<PrimitiveAction>(13, "right 0.1");
+    shared_ptr<Task> s5 = make_shared<PrimitiveAction>(14, "right 0.5");
     steeringCtrl->children.push_back(s1);
     steeringCtrl->children.push_back(s2);
     steeringCtrl->children.push_back(s3);
@@ -34,12 +33,12 @@ HRLDriver::HRLDriver():
     steeringCtrl->children.push_back(s5);
     root->children.push_back(steeringCtrl);
     // Attach the task tree to the driver object
-    this->_taskTree = root;*/
+    this->_rootTask = root;
 };
 
 HRLDriver::~HRLDriver(){};
 
-void HRLDriver::init(float *angles, string expFilePath){
+void HRLDriver::init(float *angles, unsigned int mode, string expFilePath){
     // Use the standard angle splitting as in SimpleDriver although not all of
     // the values might be used.
 
@@ -74,7 +73,7 @@ CarControl HRLDriver::wDrive(CarState cs){
         taskFeatureValues = this->_env.getTaskFeatureString(actionOnPath, newFullFeatures);
         // Get the allowed actions for the current task regarding the feature set
         allowedActions = this->_env.getAllowedActions(actionOnPath, newFullFeatures);
-        // Determine the current nodes best/exploring action
+        // Determine the current nodes best and stategic actions (the latter accounts for exploration)
         actionOnPath = actionOnPath->getActionSelection(taskFeatureValues, allowedActions);
         // Push it to the stack
         currActionStack.push_back(actionOnPath);

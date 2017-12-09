@@ -43,7 +43,7 @@ using namespace std;
 
 // Parsing the command line arguments
 void parse_args(int argc, char *argv[], char *hostName, unsigned int &serverPort, char *id, unsigned int &maxEpisodes,
-		  unsigned int &maxSteps, char *trackName, BaseDriver::tstage &stage, unsigned int &mode);
+		  unsigned int &maxSteps, char *trackName, BaseDriver::tstage &stage, unsigned int &mode, char *expFilePath);
 
 int main(int argc, char *argv[]){
     SOCKET socketDescriptor;
@@ -57,6 +57,7 @@ int main(int argc, char *argv[]){
     char trackName[1000];
     BaseDriver::tstage stage;
 		unsigned int mode;
+		char expFilePath[1000];
 
     tSockAddrIn serverAddress;
     struct hostent *hostInfo;
@@ -80,7 +81,7 @@ int main(int argc, char *argv[]){
 
 //    parse_args(argc,argv,hostName,serverPort,id,maxEpisodes,maxSteps,trackName,stage);
 
-    parse_args(argc,argv,hostName,serverPort,id,maxEpisodes,maxSteps,trackName,stage, mode);
+    parse_args(argc,argv,hostName,serverPort,id,maxEpisodes,maxSteps,trackName,stage, mode, expFilePath);
 
     hostInfo = gethostbyname(hostName);
     if (hostInfo == NULL){
@@ -129,7 +130,7 @@ int main(int argc, char *argv[]){
 
 		/**** Initialization routine of driver agent ***/														// <----
 		float angles[19];
-		d.init(angles,"");
+		d.init(angles, mode, expFilePath);
 
 		// MAIN LOOP while shutdownClient==false && ( (++curEpisode) != maxEpisodes)
     do {
@@ -244,7 +245,7 @@ int main(int argc, char *argv[]){
 //void parse_args(int argc, char *argv[], char *hostName, unsigned int &serverPort, char *id, unsigned int &maxEpisodes,
 //		  unsigned int &maxSteps,bool &noise, char *trackName, BaseDriver::tstage &stage)
 void parse_args(int argc, char *argv[], char *hostName, unsigned int &serverPort, char *id, unsigned int &maxEpisodes,
-		  unsigned int &maxSteps, char *trackName, BaseDriver::tstage &stage, unsigned int &mode){
+		  unsigned int &maxSteps, char *trackName, BaseDriver::tstage &stage, unsigned int &mode, char *expFilePath){
     int		i;
 
     // Set default values
@@ -255,7 +256,7 @@ void parse_args(int argc, char *argv[], char *hostName, unsigned int &serverPort
     strcpy(id,"SCR");
     strcpy(trackName,"unknown");
     stage=BaseDriver::UNKNOWN;
-
+		strcpy(expFilePath, "");
 
     i = 1;
     while (i < argc){
@@ -287,7 +288,10 @@ void parse_args(int argc, char *argv[], char *hostName, unsigned int &serverPort
 				} else if (strncmp(argv[i], "mode:",5) == 0){
 						sscanf(argv[i],"mode:%ud",&mode);
 						i++;
-    		} else {
+				} else if(strncmp(argv[i], "expFilePath:",12)){
+						sprintf(expFilePath, "%s", argv[i]+12);
+						i++;
+				} else {
     				i++;		/* ignore bad args */
     		}
     }

@@ -25,10 +25,8 @@
 #include <iostream>
 
 /***** Experiment setup ****/
-#define RL_ALPHA_DECAY
 #define RL_ALPHA_START      0.8
-#define RL_ALPHA_MIN        0.1
-#define RL_EPSILON          0.9
+#define RL_EPSILON          0.2
 #define RL_GAMMA            0.99
 #define RL_MAX_EPISODES     1500
 
@@ -48,7 +46,7 @@ class HRLDriver:public WrapperBaseDriver {
     /* Destructor */
     ~HRLDriver();
     // Initialization with optional experience import
-  	virtual void init(float *, string);
+  	virtual void init(float *, unsigned int, string);
 
     virtual CarControl wDrive(CarState);
 

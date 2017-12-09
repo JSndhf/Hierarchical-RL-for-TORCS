@@ -16,9 +16,7 @@ vector<shared_ptr<DynamicTask>> DataHandler::_getDynamicTasks(shared_ptr<Task> r
     // The first node is the root node of the task tree.
     // First, get its children and call getDynamicTasks recursively
     // to take their children into account, too.
-    int childCnt = rootTask->children.size();
-    int ccnt;
-    for(ccnt = 0; ccnt < childCnt; ccnt++){
+    for(unsigned int ccnt = 0; ccnt < rootTask->children.size(); ccnt++){
         shared_ptr<Task> child = rootTask->children[ccnt];
         if (!child->isStatic && !child->isPrimitive){
             // Add the child to the overall vector
@@ -41,7 +39,6 @@ vector<shared_ptr<DynamicTask>> DataHandler::_getDynamicTasks(shared_ptr<Task> r
     exist.
 ********************************************************************/
 shared_ptr<Task> DataHandler::_findTaskInTree(shared_ptr<Task> rootTask, char id){
-    unsigned int cnt;
     shared_ptr<Task> childMatch;
     // Check if the current task matches the searched id
     if(rootTask->id == id){
@@ -49,7 +46,7 @@ shared_ptr<Task> DataHandler::_findTaskInTree(shared_ptr<Task> rootTask, char id
     } else {
         // Check if the rootTask has children and try to find the id in them
         if(rootTask->children.size()){
-            for(cnt = 0; cnt < rootTask->children.size(); cnt++){
+            for(unsigned int cnt = 0; cnt < rootTask->children.size(); cnt++){
                 childMatch = DataHandler::_findTaskInTree(rootTask->children[cnt], id);
                 if(childMatch != nullptr) break;
             }
@@ -77,9 +74,8 @@ bool DataHandler::storeExperience(shared_ptr<Task> taskTree){
     // Get a vector of all dynamic tasks in the taskTree
     vector<shared_ptr<DynamicTask>> dynTasks = DataHandler::_getDynamicTasks(taskTree);
     // Iterate through the tasks and store their experience one after another
-    unsigned int tCnt;
     map<string, array<double, 2> > cvals;
-    for(tCnt = 0; tCnt < dynTasks.size(); tCnt++){
+    for(unsigned int tCnt = 0; tCnt < dynTasks.size(); tCnt++){
         auto taskNode = xmlRoot.append_child("taskNode");
         taskNode.append_attribute("id") = dynTasks[tCnt]->id;
         // For each experience create a xml node and store the C and C~ values in it

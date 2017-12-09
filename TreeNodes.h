@@ -8,22 +8,24 @@
 #ifndef TREENODES_H_
 #define TREENODES_H_
 
-// Preprocessor routines to speed calculation up
-/* Decaying alpha */
-#ifdef __LIN_ALPHA_DECAY__
-    #define MIN_ALPHA     0.1
-    #define MAX_EPISODES  1500
-    #define GET_ALPHA(x)  (x-(x-MIN_ALPHA)/MAX_EPISODES)
-#else
-    #define GET_ALPHA(x)  (x)
+// Decaying learning and exploration over the long term
+#ifdef RL_LIN_ALPHA_DECAY
+    #define RL_MIN_ALPHA    0.1
+#endif
+#ifdef RL_LIN_EPSILON_DECAY
+    #define RL_MIN_EPSILON  0.05
 #endif
 
 #include <map>
 #include <array>
 #include <vector>
-#include <memory>
+#include <memory> // shared_ptr
 #include <string>
-#include <sstream>
+#include <sstream> // stringstream
+#include <chrono> // For high resolution seeding
+#include <random> // More advanced normal distribution pseudo-random generators
+
+#include "DiscreteFeatures.h"
 
 using namespace std;
 
@@ -63,6 +65,9 @@ class DynamicTask:public Task {
     int _totalActionCount;
     unsigned int _stepCount;
     string _lastFeatActionPair;
+    mt19937 _gen;
+    uniform_real_distribution<double> _prob;
+    // Private methods
     double _getPseudoReward(string);
   public:
     /* Constructor */
@@ -106,6 +111,9 @@ class StaticGearControl: public Task {
 };
 /*** Static root node ***/
 class StaticRoot: public Task {
+    char _lastAction;
+    mt19937 _gen;
+    uniform_int_distribution<int> _prob;
   public:
     /* Constructor */
     StaticRoot(char);
