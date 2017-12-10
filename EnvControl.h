@@ -21,9 +21,11 @@
 #include <cmath>
 
 // Parameters for termination control
-#define STUCK_MAX_GAMETICKS     25
+#define STUCK_MAX_GAMETICKS     50
 #define TRACKLEAVE_RIGHT        -1.2
 #define TRACKLEAVE_LEFT         1.2
+
+#define RL_DEBUG
 
 using namespace std;
 
@@ -39,10 +41,11 @@ class EnvControl {
     unsigned int _stuckWatchdog;
     bool _isStuck;
     bool _isTerminated;
-    void _checkConditions(CarState&);
   public:
     EnvControl(unsigned int);
     ~EnvControl();
+    void updateStatus(CarState&);
+    void resetStatus();
     /* Calculates the feature values given the current CarState */
     DiscreteFeatures getFeatures(CarState&);
     /* Returns the actions available (based on the feature values) for the task */

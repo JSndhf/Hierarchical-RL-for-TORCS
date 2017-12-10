@@ -26,6 +26,7 @@
 #include <iomanip> // stringstream manipulations setfill, setw
 #include <chrono> // For high resolution seeding
 #include <random> // More advanced normal distribution pseudo-random generators
+#include <iostream>
 
 #include "DiscreteFeatures.h"
 
@@ -58,7 +59,7 @@ class Task {
     /* Strategy -- MAXNode behavior */
     virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&);
     /* Printing for debugging */
-    virtual string toString();
+    virtual string toString(int);
 };
 
 /*****************************************************************************/

@@ -43,14 +43,22 @@ shared_ptr<Task> Task::getActionSelection(DiscreteFeatures& fullFeatures, vector
   return nullptr;
 };
 // Basic stringify method
-string Task::toString(){
+string Task::toString(int lvl){
     ostringstream s;
+    // If it's the root, make no prefix, else indend it
+    for(int indends = 0; indends < lvl; indends++) s << "    ";
+    if(lvl != 0) s << "+-- ";
+    // Print out node
     if(this->isPrimitive){
-        s << "<" << this->name << " | " << this->id << ">";
+        s << "<" << this->name << " | " << (int) this->id << ">\n";
     } else if(this->isStatic){
-        s << "[" << this->name << " | " << this->id << "]";
+        s << "[" << this->name << " | " << (int) this->id << "]\n";
     } else {
-        s << "[*" << this->name << " | " << this->id << "*]";
+        s << "[*" << this->name << " | " << (int) this->id << "*]\n";
+    }
+    // Recusively call for children
+    for(auto child : this->children){
+        s << child->toString(lvl + 1);
     }
     return s.str();
 };
@@ -156,7 +164,7 @@ void DynamicTask::learn(DiscreteFeatures& currentFullFeatures, vector<shared_ptr
     pair<shared_ptr<Task>, double> maxIntCValue = this->_getInternalMaxCValue(currentFeatures, allowedActions);
     // Build the current feature-action pair
     stringstream aStarId;
-    aStarId << std::setfill('0') << std::setw(2) << std::hex << maxIntCValue.first->id;
+    aStarId << std::setfill('0') << std::setw(2) << std::hex << (int) maxIntCValue.first->id;
     string currentFeatureAStarPair = currentFeatures + aStarId.str();
     // Remember the current feature-best action pair
     this->_featureAStarPair = currentFeatureAStarPair;
@@ -256,7 +264,7 @@ shared_ptr<Task> DynamicTask::getActionSelection(DiscreteFeatures& fullFeatures,
     }
     // Store the feature-action pair for usage in next learning cycle
     stringstream aPiId;
-    aPiId << std::setfill('0') << std::setw(2) << std::hex << aPi->id;
+    aPiId << std::setfill('0') << std::setw(2) << std::hex << (int) aPi->id;
     this->_lastFeatureAPiPair = featureValues + aPiId.str();
 
     return aPi;
@@ -297,6 +305,8 @@ shared_ptr<Task> StaticGearControl::getActionSelection(DiscreteFeatures& fullFea
     //    Up   | 8k | 9.5k | 9.5k | 9.5k | 9.5k | -
     //    Down | -  | 4k   | 6.3k | 7.3k | 7.3k | 7.3k
     switch(gear){
+        case 0: aID = 7;
+                break;
         case 1: if(rpm >= (int) DiscreteFeatures::rpm_t::RPM7) aID = 7;
                 else aID = 8;
                 break;
@@ -319,6 +329,7 @@ shared_ptr<Task> StaticGearControl::getActionSelection(DiscreteFeatures& fullFea
         case 6: if(rpm <= (int) DiscreteFeatures::rpm_t::RPM5) aID = 9;
                 else aID = 8;
                 break;
+        default: aID = 8;
     }
     // If the desired action is allowed, return it.
     for(unsigned int itm = 0; itm < allowedActions.size(); itm++){
@@ -341,18 +352,18 @@ shared_ptr<Task> StaticRoot::getActionSelection(DiscreteFeatures& fullFeatures, 
     // check if the last executed action can be found and execute the next one.
     // Note: This behavior is independent of the fullFeature state discription.
     shared_ptr<Task> nextAction = nullptr;
-    for(unsigned int itm = 0; itm < allowedActions.size(); itm++){
-        if(allowedActions[itm]->id == this->_lastAction){
-            itm++;
-            // Make sure, the next action is before or equal the last element in the vector
-            if(itm < allowedActions.size()) nextAction = allowedActions[itm];
-            // Or take the first one instead
-            else nextAction = allowedActions[0];
-            break;
+    for(unsigned int tsk = 0; tsk < allowedActions.size(); tsk++){
+        if(allowedActions[tsk]->id == this->_lastAction){
+            if(allowedActions[tsk] == allowedActions.back()){
+                nextAction = allowedActions[0];
+            } else {
+                nextAction = allowedActions[tsk + 1];
+            }
         }
     }
     // If the last executed action cannot be found, execute a random action of the allowed ones.
     if(nextAction == nullptr) nextAction = allowedActions[this->_prob(this->_gen) % (allowedActions.size() - 1)];
 
+    this->_lastAction = nextAction->id;
     return nextAction;
 };

@@ -1,6 +1,6 @@
 #include "DataHandler.h"
 
-DataHandler::DataHandler(){};
+DataHandler::DataHandler():_episodeCnt(0),_episodeReward(0.0){};
 DataHandler::~DataHandler(){};
 
 /*** getDynamicTasks *************************************************
@@ -82,11 +82,11 @@ bool DataHandler::storeExperience(shared_ptr<Task> taskTree){
         for(auto const &cval : dynTasks[tCnt]->cvals){
             auto expNode = taskNode.append_child("cValNode");
             expNode.append_attribute("sa") = cval.first.c_str();
-            expNode.append_child(pugi::node_pcdata).set_value(
-                    to_string(cval.second[0]).c_str()
+            expNode.append_child(pugi::node_cdata).set_value(
+                    to_string(cval.second[RL_CVAL_POS]).c_str()
                 );
-            expNode.append_child(pugi::node_pcdata).set_value(
-                    to_string(cval.second[1]).c_str()
+            expNode.append_child(pugi::node_cdata).set_value(
+                    to_string(cval.second[RL_CTILDEVAL_POS]).c_str()
                 );
         }
     }
@@ -137,7 +137,7 @@ bool DataHandler::loadExperience(string srcPath, shared_ptr<Task> taskTree){
                 task->cvals.insert(pair<string, array<double, 2>>(
                         (string) xmlCValNode.attribute("as").value(),
                         array<double, 2>
-                          {{ cvalSet[0].node().text().as_double(), cvalSet[1].node().text().as_double() }}
+                          {{ cvalSet[RL_CVAL_POS].node().text().as_double(), cvalSet[RL_CTILDEVAL_POS].node().text().as_double() }}
                         )
                     );
             }
@@ -147,10 +147,15 @@ bool DataHandler::loadExperience(string srcPath, shared_ptr<Task> taskTree){
 
 }
 
-void DataHandler::createStatistics(){
-
+void DataHandler::updateStats(double addReward){
+    this->_episodeReward += addReward;
 };
 
-void DataHandler::updateStatistics(double totalEpisodeReward, double totalEpisodeDistance){
-
-};
+void DataHandler::writeStats(){
+    ofstream statFile;
+    statFile.open("data/stats.txt", ios::app);
+    statFile << this->_episodeCnt << "; " << this->_episodeReward << ";\n";
+    statFile.close();
+    this->_episodeReward = 0.0;
+    this->_episodeCnt++;
+}

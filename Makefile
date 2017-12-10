@@ -1,9 +1,6 @@
 CC            =  g++
 CPPFLAGS      = -std=c++11 -Wall -g
 
-# Uncomment the following line for a verbose client
-#CPPFLAGS      = -std=c++11 -Wall -g -D __UDP_CLIENT_VERBOSE__
-
 #Put here the name of your driver class
 DRIVER_CLASS = HRLDriver
 #Put here the filename of your driver class header

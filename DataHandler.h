@@ -14,6 +14,7 @@
 #include <memory>
 #include <array>
 #include <iostream>
+#include <fstream>
 
 #include "TreeNodes.h"
 
@@ -21,7 +22,8 @@ using namespace std;
 
 class DataHandler {
   private:
-    int _monitorFileHandle;
+    int _episodeCnt;
+    double _episodeReward;
     vector<shared_ptr<DynamicTask>> _getDynamicTasks(shared_ptr<Task>);
     shared_ptr<Task> _findTaskInTree(shared_ptr<Task>, char);
   public:
@@ -32,8 +34,8 @@ class DataHandler {
     bool storeExperience(shared_ptr<Task>);
     bool loadExperience(string, shared_ptr<Task>);
 
-    void createStatistics();
-    void updateStatistics(double, double);
+    void updateStats(double);
+    void writeStats();
 };
 
 #endif /*DATAHANDLER_H_*/

@@ -7,18 +7,36 @@ EnvControl::EnvControl(unsigned int maxEpisodes):
 
 EnvControl::~EnvControl(){};
 
-void EnvControl::_checkConditions(CarState& cs){
+void EnvControl::updateStatus(CarState& cs){
     // Check if the car is stuck right now (no movement and/or an angle greater
     // 45 degrees (pi/4) as in [Karavolos 2013])
     double angle = fabs(cs.getAngle());
     double speed = cs.getSpeedX() + cs.getSpeedY();
-    if(speed < 0.1 || angle > 0.7853) this->_stuckWatchdog++;
+    if(speed < 0.1 || angle > 0.9) this->_stuckWatchdog++;
     else this->_stuckWatchdog = 0;
     // If the car is stuck for too long, set the _isStuck flag.
-    if(this->_stuckWatchdog >= STUCK_MAX_GAMETICKS) this->_isStuck = true;
+    if(this->_stuckWatchdog >= STUCK_MAX_GAMETICKS){
+        this->_isStuck = true;
+        #ifdef RL_DEBUG
+            cout << "Car stuck." << endl;
+        #endif
+    }
     // Check if a termination condition is reached (stuck or out of track)
     double pos = cs.getTrackPos();
-    if(this->_isStuck || (pos < TRACKLEAVE_RIGHT || pos > TRACKLEAVE_LEFT)) this->_isTerminated = true;
+    if(this->_isStuck || (pos < TRACKLEAVE_RIGHT || pos > TRACKLEAVE_LEFT)){
+        this->_isTerminated = true;
+        #ifdef RL_DEBUG
+            cout << "Car ouside of the track." << endl;
+        #endif
+    }
+};
+
+void EnvControl::resetStatus(){
+    this->_isStuck = false;
+    this->_isTerminated = false;
+    this->_stuckWatchdog = 0;
+    CarControl empty(0.0, 0.0, 0, 0.0, 0.0);
+    this->_lastActions = empty;
 };
 
 /* Calculates the feature values given the current CarState */
@@ -91,9 +109,6 @@ vector<shared_ptr<Task>> EnvControl::getAllowedActions(shared_ptr<Task> task, Di
         // root constraints:
         case 0:
             for(shared_ptr<Task> a : task->children){
-                // Accelerate first if standing still (no gear shifting, no steering)
-                if(fullFeatures.speed == DiscreteFeatures::speed_t::V0 && (a->id == 2 || a->id == 3)) continue;
-                // else
                 aAllowed.push_back(a);
             }
             break;
@@ -105,6 +120,12 @@ vector<shared_ptr<Task>> EnvControl::getAllowedActions(shared_ptr<Task> task, Di
                 // No breaking if already standing still
                 if(fullFeatures.speed == DiscreteFeatures::speed_t::V0 && a->id == 6) continue;
                 // else
+                aAllowed.push_back(a);
+            }
+            break;
+        // gearCtrl constraints
+        case 2:
+            for(shared_ptr<Task> a : task->children){
                 aAllowed.push_back(a);
             }
             break;
@@ -129,15 +150,12 @@ double EnvControl::getAbstractReward(CarState& cs){
     // undesired states.
     double reward;
     double ds = cs.getDistFromStart() - this->_lastState.getDistFromStart();
-    double dv = cs.getSpeedX() - this->_lastState.getSpeedX();
     double pos = cs.getTrackPos();
     // Allow small crossings of the sidelines but punish the leaving of track
     if(this->_isStuck){
         reward = -3.0;
     } else if(pos < TRACKLEAVE_RIGHT || pos > TRACKLEAVE_LEFT){
         reward = -2.0;
-    } else if(dv < 0.1){
-        reward = -1.0;
     } else {
         reward = ds;
     }
@@ -156,6 +174,8 @@ CarControl EnvControl::getActions(shared_ptr<Task> a){
     // If the current episode is terminated, send a request for restart.
     if(this->_isTerminated){
         cc.setMeta(1);
+        // Count up the epsiodes
+        this->_episodeCnt++;
     } else {
         // Mapping of action ids to concrete action values
         switch(a->id){
@@ -175,5 +195,6 @@ CarControl EnvControl::getActions(shared_ptr<Task> a){
             case 14: cc.setSteer(-0.5); break;
         }
     }
+    this->_lastActions = cc;
     return cc;
 };
