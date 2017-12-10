@@ -20,9 +20,10 @@
 #include "DataHandler.h"
 
 #include <vector>
-#include <memory>
+#include <memory> // shared_ptr
 #include <string>
 #include <iostream>
+#include <unistd.h> // access()
 
 /***** Experiment setup ****/
 #define RL_ALPHA_START      0.8
@@ -38,7 +39,8 @@ class HRLDriver:public WrapperBaseDriver {
     EnvControl _env;
     DataHandler _data;
     DiscreteFeatures _lastState;
-    vector<char> _lastActionStack;
+    vector<shared_ptr<Task>> _lastActionsStack;
+    bool _isLearning;
   public:
     /* Constructor - includes creating the envControl and taskTree,
        as well as preparing file handling and logging.*/

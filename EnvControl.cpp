@@ -1,8 +1,9 @@
 #include "EnvControl.h"
 
 EnvControl::EnvControl(unsigned int maxEpisodes):
-    _episodeCnt(0),_maxEpisodes(maxEpisodes),_stuckWatchdog(0),_isStuck(false),
-    _isTerminated(false),_lastState(CarState()),_lastActions(CarControl()){};
+    _episodeCnt(0),_maxEpisodes(maxEpisodes),_lastState(CarState()),
+    _lastActions(CarControl()),_stuckWatchdog(0),_isStuck(false),
+    _isTerminated(false){};
 
 EnvControl::~EnvControl(){};
 
@@ -17,7 +18,7 @@ void EnvControl::_checkConditions(CarState& cs){
     if(this->_stuckWatchdog >= STUCK_MAX_GAMETICKS) this->_isStuck = true;
     // Check if a termination condition is reached (stuck or out of track)
     double pos = cs.getTrackPos();
-    if(this->_isStuck || (pos < TRACKLEAVE_RIGHT || pos > TRACKLEAVE_LEFT)) this->_isTerminated;
+    if(this->_isStuck || (pos < TRACKLEAVE_RIGHT || pos > TRACKLEAVE_LEFT)) this->_isTerminated = true;
 };
 
 /* Calculates the feature values given the current CarState */
@@ -76,37 +77,10 @@ DiscreteFeatures EnvControl::getFeatures(CarState& cs){
                 + (rrpm > 5000) + (rrpm > 6300) + (rrpm > 7300) + (rrpm > 8000) + (rrpm > 9300));
     /***** Gear **************************************************************/
     dPhi.gear = cs.getGear();
+
+    return dPhi;
 };
 
-/* Returns part of the full feature vector to be used in the particular task */
-string EnvControl::getTaskFeatureString(shared_ptr<Task> task, DiscreteFeatures& fullFeatures){
-    // For each task only a portion of the full set of features may be relevant.
-    // Also, to ease up further processing, convert the dicrete feature values
-    // internally stored as ints in the enum to a hex string.
-    stringstream hexFeatures;
-    switch(task->id){
-        // Root task gets the full feature set
-        case 0: hexFeatures << std::setfill('0') << std::setw(2) << std::hex << fullFeatures.speed;
-                hexFeatures << std::setfill('0') << std::setw(2) << std::hex << fullFeatures.curvature;
-                hexFeatures << std::setfill('0') << std::setw(2) << std::hex << fullFeatures.trackPos;
-                hexFeatures << std::setfill('0') << std::setw(2) << std::hex << fullFeatures.rpm;
-                hexFeatures << std::setfill('0') << std::setw(2) << std::hex << fullFeatures.gear;
-                break;
-        // speedCtrl
-        case 1: hexFeatures << std::setfill('0') << std::setw(2) << std::hex << fullFeatures.speed;
-                hexFeatures << std::setfill('0') << std::setw(2) << std::hex << fullFeatures.curvature;
-                break;
-        // gearCtrl
-        case 2: hexFeatures << std::setfill('0') << std::setw(2) << std::hex << fullFeatures.rpm;
-                hexFeatures << std::setfill('0') << std::setw(2) << std::hex << fullFeatures.gear;
-                break;
-        // steeringCtrl
-        case 3: hexFeatures << std::setfill('0') << std::setw(2) << std::hex << fullFeatures.speed;
-                hexFeatures << std::setfill('0') << std::setw(2) << std::hex << fullFeatures.curvature;
-                hexFeatures << std::setfill('0') << std::setw(2) << std::hex << fullFeatures.trackPos;
-                break;
-    }
-};
 /* Returns the actions available (based on the feature values) for the task */
 vector<shared_ptr<Task>> EnvControl::getAllowedActions(shared_ptr<Task> task, DiscreteFeatures& fullFeatures){
     // Basically the constraints on each task can be enforced here.
@@ -145,6 +119,7 @@ vector<shared_ptr<Task>> EnvControl::getAllowedActions(shared_ptr<Task> task, Di
             }
             break;
     }
+    return aAllowed;
 };
 /* Returns the overall MDP reward */
 double EnvControl::getAbstractReward(CarState& cs){
@@ -200,5 +175,5 @@ CarControl EnvControl::getActions(shared_ptr<Task> a){
             case 14: cc.setSteer(-0.5); break;
         }
     }
-
+    return cc;
 };

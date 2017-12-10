@@ -19,13 +19,18 @@
 #include <map>
 #include <array>
 #include <vector>
+#include <utility> // pair
 #include <memory> // shared_ptr
 #include <string>
 #include <sstream> // stringstream
+#include <iomanip> // stringstream manipulations setfill, setw
 #include <chrono> // For high resolution seeding
 #include <random> // More advanced normal distribution pseudo-random generators
 
 #include "DiscreteFeatures.h"
+
+#define RL_CVAL_POS       0
+#define RL_CTILDEVAL_POS  1
 
 using namespace std;
 
@@ -44,12 +49,14 @@ class Task {
     bool isPrimitive;
     bool isStatic;
     vector<shared_ptr<Task>> children;
+    /* Returns part of the full feature vector to be used in the particular task */
+    virtual string getTaskFeatureString(DiscreteFeatures&);
     /*** POLYMORPHIC METHODS ***/
     /* Evaluation -- QNode behavior */
-    virtual void learn();
-    virtual double getMaxQValue(string);
+    virtual void learn(DiscreteFeatures&, vector<shared_ptr<Task>>&, double);
+    virtual double getExternalMaxCValue(DiscreteFeatures&);
     /* Strategy -- MAXNode behavior */
-    virtual shared_ptr<Task> getActionSelection(string, vector<shared_ptr<Task>>&);
+    virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&);
     /* Printing for debugging */
     virtual string toString();
 };
@@ -59,16 +66,28 @@ class Task {
 /*****************************************************************************/
 class DynamicTask:public Task {
   private:
-    double _alphaStart;
+    double _alpha;
     double _gamma;
     double _epsilon;
     int _totalActionCount;
     unsigned int _stepCount;
-    string _lastFeatActionPair;
+    /* Variables used for learning */
+    string _featureAStarPair;
+    string _lastFeatureAPiPair;
+    /* Randomness of exploration */
     mt19937 _gen;
     uniform_real_distribution<double> _prob;
     // Private methods
     double _getPseudoReward(string);
+    /* Returns the best action and its value in the given state regarding
+       the INTERNAL completion function (including pseudo-rewards) */
+    pair<shared_ptr<Task>, double> _getInternalMaxCValue(string, vector<shared_ptr<Task>>&);
+    /* Returns the value of a feature-action pair regarding the INTERNAL
+       completion function */
+    double _getInternalCValue(string);
+    /* Returns the value of a feature-action pair regarding
+       the EXTERNAL completion function (no pseudo-rewards) */
+    double _getExternalCValue(string);
   public:
     /* Constructor */
     DynamicTask(char, string, double, double, double, int);
@@ -77,10 +96,10 @@ class DynamicTask:public Task {
     /* Evaluation -- QNode behavior */
     // Making the C-table accessible for the sake of less memory occupation
     map<string, array<double, 2> > cvals;
-    virtual void learn();
-    virtual double getMaxQValue(string);
+    virtual void learn(DiscreteFeatures&, vector<shared_ptr<Task>>&, double);
+    virtual double getExternalMaxCValue(DiscreteFeatures&);
     /* Strategy -- MAXNode behavior */
-    virtual shared_ptr<Task> getActionSelection(string, vector<shared_ptr<Task>>&);
+    virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&);
 };
 
 /*****************************************************************************/
@@ -107,7 +126,7 @@ class StaticGearControl: public Task {
     StaticGearControl(char id);
     /* Destructor */
     virtual ~StaticGearControl();
-    virtual shared_ptr<Task> getActionSelection(string, vector<shared_ptr<Task>>&);
+    virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&);
 };
 /*** Static root node ***/
 class StaticRoot: public Task {
@@ -119,7 +138,7 @@ class StaticRoot: public Task {
     StaticRoot(char);
     /* Destructor */
     virtual ~StaticRoot();
-    virtual shared_ptr<Task> getActionSelection(string, vector<shared_ptr<Task>>&);
+    virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&);
 };
 
 #endif /*TREENODES_H_*/

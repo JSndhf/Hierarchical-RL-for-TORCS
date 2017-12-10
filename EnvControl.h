@@ -17,7 +17,6 @@
 #include <string>
 #include <sstream>
 #include <memory>
-#include <iomanip>
 #include <vector>
 #include <cmath>
 
@@ -46,9 +45,6 @@ class EnvControl {
     ~EnvControl();
     /* Calculates the feature values given the current CarState */
     DiscreteFeatures getFeatures(CarState&);
-
-    /* Returns part of the full feature vector to be used in the particular task */
-    string getTaskFeatureString(shared_ptr<Task>, DiscreteFeatures&);
     /* Returns the actions available (based on the feature values) for the task */
     vector<shared_ptr<Task>> getAllowedActions(shared_ptr<Task>, DiscreteFeatures&);
     /* Returns the overall MDP reward */

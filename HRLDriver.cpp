@@ -52,15 +52,42 @@ void HRLDriver::init(float *angles, unsigned int mode, string expFilePath){
       	angles[18 - i] = 20 - (i - 5) * 5;
     }
     angles[9] = 0;
+    // Set the mode
+    this->_isLearning = (bool) mode;
+    // Check whether the dynamic tasks should be fed with stored experience
+    if(expFilePath.size() != 0){
+        // Check if the file can be found
+        if(access( expFilePath.c_str(), F_OK ) != -1){
+            // Load the experience
+            this->_data.loadExperience(expFilePath, this->_rootTask);
+        }
+    }
 };
 
 CarControl HRLDriver::wDrive(CarState cs){
-    /********* CURRENT STATE PROCESSING ***************************************/
-    /**************************************************************************/
     // Extract the features from the CarState
-    DiscreteFeatures newFullFeatures = this->_env.getFeatures(cs);
+    DiscreteFeatures fullFeatures = this->_env.getFeatures(cs);
+    /*** Learn first, as then the internally computed best action choices in
+         the current state can be reused for strategy finding               ***/
+
     // Get the overall reward
     double rt = this->_env.getAbstractReward(cs);
+
+    /********* BACKWARDS LEARNING *********************************************/
+    /**************************************************************************/
+    // For each dynamic task in the stack of actions of the last state
+    for(shared_ptr<Task> task : this->_lastActionsStack){
+        if(!task->isPrimitive && !task->isStatic){
+            // Get the currently allowed actions for the specific task
+            vector<shared_ptr<Task>> allowedActions = this->_env.getAllowedActions(task, fullFeatures);
+            // Call the learning method
+            task->learn(fullFeatures, allowedActions, rt);
+        }
+    }
+
+    /********* CURRENT STATE PROCESSING ***************************************/
+    /**************************************************************************/
+
     // Do a tree search for the best action and build an hierarchical stack of actions
     // Begin with the root node
     shared_ptr<Task> actionOnPath = this->_rootTask;
@@ -69,12 +96,10 @@ CarControl HRLDriver::wDrive(CarState cs){
     // Stack of actions/tasks along the best path
     vector<shared_ptr<Task>> currActionStack;
     do {
-        // Get the task specific portion of the full feature set
-        taskFeatureValues = this->_env.getTaskFeatureString(actionOnPath, newFullFeatures);
         // Get the allowed actions for the current task regarding the feature set
-        allowedActions = this->_env.getAllowedActions(actionOnPath, newFullFeatures);
+        allowedActions = this->_env.getAllowedActions(actionOnPath, fullFeatures);
         // Determine the current nodes best and stategic actions (the latter accounts for exploration)
-        actionOnPath = actionOnPath->getActionSelection(taskFeatureValues, allowedActions);
+        actionOnPath = actionOnPath->getActionSelection(fullFeatures, allowedActions);
         // Push it to the stack
         currActionStack.push_back(actionOnPath);
         // Do as long as action is not primitive.
@@ -82,16 +107,10 @@ CarControl HRLDriver::wDrive(CarState cs){
     // The primitive action now resides at the end of the stack as well as in
     // the actionOnPath variable
 
-    /********* BACKWARDS LEARNING *********************************************/
-    /**************************************************************************/
-    // For each dynamic task in the stack of actions of the last state
-        // Get the task specific portion of the last and the current feature vector
-
-        // Let the given task learn (update its estimate on the last state and last action)
-
     /********* STORING AND EXECUTING ******************************************/
     /**************************************************************************/
-    // Store the current state and action stack
+    // Store the current action stack to learn from its outcome in the next iteration
+    this->_lastActionsStack = currActionStack;
     // Perform the primitive action
     return this->_env.getActions(actionOnPath);
 };
