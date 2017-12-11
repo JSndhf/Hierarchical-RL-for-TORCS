@@ -125,10 +125,13 @@ CarControl HRLDriver::wDrive(CarState cs){
         primActions = this->_env.getActions(actionOnPath);
         if(primActions.getMeta()){
             // Store the experience once every 500 episodes
-            if(!(this->_episodeCnt % 500)) this->_data.storeExperience(this->_rootTask);
+            if((this->_episodeCnt % 50) == 0) this->_data.storeExperience(this->_rootTask);
             // Write out stats
             this->_data.writeStats();
             this->_episodeCnt++;
+            // Output to visualize episodes
+            cout << ".";
+            if((this->_episodeCnt % 50) == 0) cout << "[" << this->_episodeCnt << "]";
         }
     }
     return primActions;

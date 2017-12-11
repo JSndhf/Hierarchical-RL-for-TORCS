@@ -23,6 +23,7 @@
 #define UDP_MSGLEN 1000
 #define UDP_CLIENT_TIMEUOT 1000000
 //#define __UDP_CLIENT_VERBOSE__
+//#define __COMMUNICATION_VERBOSE__
 /************************/
 
 #ifdef WIN32
@@ -137,9 +138,13 @@ int main(int argc, char *argv[]){
         /************************ UDP client identification *****************************/
         while(1) {
         		string initString = SimpleParser::stringify(string("init"),angles,19);
-            cout << "Sending id to server: " << id << endl;
+						#ifdef __COMMUNICATION_VERBOSE__
+            		cout << "Sending id to server: " << id << endl;
+						#endif
             initString.insert(0,id);
-            cout << "Sending init string to the server: " << initString << endl;
+						#ifdef __COMMUNICATION_VERBOSE__
+            		cout << "Sending init string to the server: " << initString << endl;
+						#endif
             if (sendto(socketDescriptor, initString.c_str(), initString.length(), 0,
                        (struct sockaddr *) &serverAddress,
                        sizeof(serverAddress)) < 0){
@@ -161,7 +166,9 @@ int main(int argc, char *argv[]){
                 if (numRead < 0){
                     cerr << "didn't get response from server...";
                 } else {
-                		cout << "Received: " << buf << endl;
+										#ifdef __COMMUNICATION_VERBOSE__
+                				cout << "Received: " << buf << endl;
+										#endif
 										if (strcmp(buf,"***identified***")==0)
                     		break;
             		}
@@ -194,13 +201,17 @@ int main(int argc, char *argv[]){
                 if (strcmp(buf,"***shutdown***")==0){
                     d.onShutdown();
                     //shutdownClient = true;
-                    cout << "Client Shutdown" << endl;
+										#ifdef __COMMUNICATION_VERBOSE__
+                    		cout << "Client Shutdown" << endl;
+										#endif
                     break;
                 }
 								/**** Driver restart routine ***/																// <----
                 if (strcmp(buf,"***restart***")==0){
                     d.onRestart();
-                    cout << "Client Restart" << endl;
+										#ifdef __COMMUNICATION_VERBOSE__
+                    		cout << "Client Restart" << endl;
+										#endif
                     break;
                 }
                 /* Compute the action to send to the server or restart if
@@ -224,7 +235,9 @@ int main(int argc, char *argv[]){
                     cout << "Sending " << buf << endl;
 #endif
             } else {
-                cout << "** Server did not respond in 1 second.\n";
+								#ifdef __COMMUNICATION_VERBOSE__
+                		cout << "** Server did not respond in 1 second.\n";
+								#endif
             }
 				// END WHILE: Continuous incoming data processing
         }

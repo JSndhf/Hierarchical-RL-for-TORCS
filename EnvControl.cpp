@@ -3,7 +3,10 @@
 EnvControl::EnvControl(unsigned int maxEpisodes):
     _episodeCnt(0),_maxEpisodes(maxEpisodes),_lastState(CarState()),
     _lastActions(CarControl()),_stuckWatchdog(0),_isStuck(false),
-    _isTerminated(false){};
+    _isTerminated(false){
+        CarControl dummy2(0.0, 0.0, 0, 0.0, 0.0);
+        this->_lastActions = dummy2;
+    };
 
 EnvControl::~EnvControl(){};
 
@@ -35,8 +38,8 @@ void EnvControl::resetStatus(){
     this->_isStuck = false;
     this->_isTerminated = false;
     this->_stuckWatchdog = 0;
-    CarControl empty(0.0, 0.0, 0, 0.0, 0.0);
-    this->_lastActions = empty;
+    CarControl dummy2(0.0, 0.0, 0, 0.0, 0.0);
+    this->_lastActions = dummy2;
 };
 
 /* Calculates the feature values given the current CarState */
@@ -149,13 +152,15 @@ double EnvControl::getAbstractReward(CarState& cs){
     // rewards for leaving the track and for standing still seek to avoid
     // undesired states.
     double reward;
-    double ds = cs.getDistFromStart() - this->_lastState.getDistFromStart();
+    double ds = fabs(cs.getDistFromStart() - this->_lastState.getDistFromStart());
+    // Starting race negative distFromStart hack
+    ds = (ds > 10.0) ? 0 : ds;
     double pos = cs.getTrackPos();
     // Allow small crossings of the sidelines but punish the leaving of track
     if(this->_isStuck){
-        reward = -3.0;
+        reward = -9.0;
     } else if(pos < TRACKLEAVE_RIGHT || pos > TRACKLEAVE_LEFT){
-        reward = -2.0;
+        reward = -3.0;
     } else {
         reward = ds;
     }

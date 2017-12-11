@@ -25,7 +25,7 @@
 #define TRACKLEAVE_RIGHT        -1.2
 #define TRACKLEAVE_LEFT         1.2
 
-#define RL_DEBUG
+//#define RL_DEBUG
 
 using namespace std;
 
