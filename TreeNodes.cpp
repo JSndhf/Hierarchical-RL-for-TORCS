@@ -201,6 +201,10 @@ void DynamicTask::learn(DiscreteFeatures& currentFullFeatures, vector<shared_ptr
     cvalUpdate[RL_CVAL_POS] = C_sLast_aPiLast;
     cvalUpdate[RL_CTILDEVAL_POS] = Ctilde_sLast_aPiLast;
     this->cvals[this->_lastFeatureAPiPair] = cvalUpdate;
+    /****** DECAYING OF LEARNING PARAMETERS **********************************/
+    /*************************************************************************/
+    this->_alpha -= HRL_ALPHA_DECAY;
+    this->_epsilon -= HRL_EPSILON_DECAY;
 };
 
 /*** getQValue *****************************************************

@@ -28,6 +28,7 @@
 #include <random> // More advanced normal distribution pseudo-random generators
 #include <iostream>
 
+#include "hrl_config.h"
 #include "DiscreteFeatures.h"
 
 #define RL_CVAL_POS       0

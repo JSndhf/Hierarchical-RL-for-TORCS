@@ -34,10 +34,8 @@ HRLDriver::HRLDriver():
     root->children.push_back(steeringCtrl);
     // Attach the task tree to the driver object
     this->_rootTask = root;
-    #ifdef HRL_DEBUG
-        cout << "*** Task configuration: ***" << endl;
-        cout << this->_rootTask->toString(0);
-    #endif
+    cout << "*** Task configuration: ***" << endl;
+    cout << this->_rootTask->toString(0);
     this->_episodeCnt = 0;
 };
 

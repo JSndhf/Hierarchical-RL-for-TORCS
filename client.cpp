@@ -29,7 +29,7 @@
 #define UDP_MSGLEN 1000
 #define UDP_CLIENT_TIMEUOT 1000000
 //#define __UDP_CLIENT_VERBOSE__
-//#define __COMMUNICATION_VERBOSE__
+#define __COMMUNICATION_VERBOSE__
 /************************/
 
 #ifdef WIN32
@@ -132,32 +132,32 @@ int main(int argc, char *argv[]){
 		/**** Initialization routine of driver agent ***/														// <----
 		float angles[19];
 		d.init(angles, mode, expFilePath);
-
-		#ifdef HRL_DEBUG
-				if(mode){
-						cout << "********** Begin driving **********" << endl;
-				} else {
-						cout << "********** Begin learning *********" << endl;
-				}
-		#endif
-
-		/************** Create as much instances of the torcs game as needed ****************/
-		for(int server = HRL_DEFAULT_SERVERPORT; server <= HRL_MAX_SERVERPORT; server++){
-				// Build system call for the torcs server
-				stringstream ss;
-				ss << "torcs -nofuel -nodamage -nolaptime -t 1000000  -r " << HRL_RACECONFIG_BASE << "-" << server << ".xml ";
-				#ifndef __COMMUNICATION_VERBOSE__
-						ss << ">/dev/null 2>&1 ";		// Surpress output from torcs
-				#endif
-				ss << "&";	// Immediate return
-				system(ss.str().c_str());
+		if(mode){
+				cout << "********** Begin driving **********" << endl << endl;
+		} else {
+				cout << "********** Begin learning *********" << endl << endl;
 		}
-		// Give the servers a little head start for this first startup
-		usleep(2000000);
+		/************** ONLY FOR LEARNING MODE **********************************************/
+		if(mode){
+				/************** Create as much instances of the torcs game as needed ****************/
+				for(int server = HRL_DEFAULT_SERVERPORT; server <= HRL_MAX_SERVERPORT; server++){
+						// Build system call for the torcs server
+						stringstream ss;
+						ss << "torcs -nofuel -nodamage -nolaptime -t 1000000  -r " << HRL_RACECONFIG_BASE << "-" << server << ".xml ";
+						#ifndef __COMMUNICATION_VERBOSE__
+								ss << ">/dev/null 2>&1 ";		// Surpress output from torcs
+						#endif
+						ss << "&";	// Immediate return
+						system(ss.str().c_str());
+				}
+				// Give the servers a little head start for this first startup
+				usleep(2000000);
+		}
 
+		// Mark the beginning of the experiments
+		auto experimentStart = std::chrono::system_clock::now();
 		// MAIN LOOP while shutdownClient==false && ( (++curEpisode) != maxEpisodes)
     do {
-				//auto timerStart = std::chrono::high_resolution_clock::now();
 				/*************************** Server definition **********************************/
 				// Make sure, the serverPort is inbetween 3001 and 3009
 				serverPort = (serverPort > HRL_MAX_SERVERPORT || serverPort < HRL_DEFAULT_SERVERPORT) ? HRL_DEFAULT_SERVERPORT : serverPort;
@@ -213,6 +213,7 @@ int main(int argc, char *argv[]){
 						cout << "identification done." << endl;
 				#endif
 				/************************ Continuous incoming data processing *****************/
+				int noRespCnt = 0;
         while(1){
             // wait until answer comes back, for up to UDP_CLIENT_TIMEUOT micro sec
             FD_ZERO(&readSet);
@@ -241,7 +242,7 @@ int main(int argc, char *argv[]){
 								/************* SERVER RESTART AND SWITCHING ************************/
 								/* A restart is requested from the agent, so restart the current server
 									 and switch to the next available one. */
-								if(action.find("(meta 1)") != string::npos){
+								if(mode && (action.find("(meta 1)") != string::npos)){
 										stringstream ss1;
 										// First force a server shutdown for the current server
 										ss1 << "lsof -i udp:" << serverPort << " | awk 'NR!=1 {print $2}' | xargs kill";
@@ -278,20 +279,30 @@ int main(int argc, char *argv[]){
 										#endif
 								}
             } else {
+								if(noRespCnt > 2) break;
 								#ifdef __COMMUNICATION_VERBOSE__
                 		cout << "** Server did not respond in 1 second.\n";
 								#endif
+								noRespCnt++;
             }
 				// END WHILE: Continuous incoming data processing
         }
 		// END DO: MAIN LOOP
 		} while((++curEpisode) != maxEpisodes);
-
+		// Now calculate and print out the experiment duration
+		auto experimentEnd = std::chrono::system_clock::now();
+		auto experimentDur = std::chrono::duration_cast<std::chrono::duration<float>>(experimentEnd - experimentStart);
+		cout << endl << "********** End of run *************" << endl;
+		cout << "*** Total time: " << experimentDur.count() << " sec. ***" << endl;
+		cout << "***********************************" << endl << endl;
 		// Clean up before leaving
     d.onShutdown();
     CLOSE(socketDescriptor);
-		/************** Close all running instances of torcs *******************************/
-		system("pkill torcs");
+		/************** ONLY FOR LEARNING MODE **********************************************/
+		if(mode){
+				/************** Close all running instances of torcs *******************************/
+				system("pkill torcs");
+		}
 #ifdef WIN32
     WSACleanup();
 #endif
