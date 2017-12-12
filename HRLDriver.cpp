@@ -58,6 +58,7 @@ void HRLDriver::init(float *angles, unsigned int mode, string expFilePath){
     angles[9] = 0;
     // Set the mode
     this->_isLearning = (bool) mode;
+    this->_episodeCnt = 0;
     // Check whether the dynamic tasks should be fed with stored experience
     if(expFilePath.size() != 0){
         // Check if the file can be found
@@ -124,14 +125,15 @@ CarControl HRLDriver::wDrive(CarState cs){
         // Perform the primitive action
         primActions = this->_env.getActions(actionOnPath);
         if(primActions.getMeta()){
+            this->_episodeCnt++;
             // Store the experience once every 500 episodes
             if((this->_episodeCnt % 50) == 0) this->_data.storeExperience(this->_rootTask);
             // Write out stats
             this->_data.writeStats();
-            this->_episodeCnt++;
             // Output to visualize episodes
             cout << ".";
             if((this->_episodeCnt % 50) == 0) cout << "[" << this->_episodeCnt << "]";
+            cout.flush();
         }
     }
     return primActions;

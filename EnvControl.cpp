@@ -153,14 +153,14 @@ double EnvControl::getAbstractReward(CarState& cs){
     // undesired states.
     double reward;
     double ds = fabs(cs.getDistFromStart() - this->_lastState.getDistFromStart());
-    // Starting race negative distFromStart hack
-    ds = (ds > 10.0) ? 0 : ds;
+    // Starting race negative distFromStart hack, make rewards smaller
+    ds = (ds > 10.0) ? 0 : ds/5;
     double pos = cs.getTrackPos();
     // Allow small crossings of the sidelines but punish the leaving of track
     if(this->_isStuck){
-        reward = -9.0;
+        reward = -90.0;
     } else if(pos < TRACKLEAVE_RIGHT || pos > TRACKLEAVE_LEFT){
-        reward = -3.0;
+        reward = -30.0;
     } else {
         reward = ds;
     }
