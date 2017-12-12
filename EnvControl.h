@@ -11,6 +11,7 @@
 #include "CarState.h"
 #include "CarControl.h"
 
+#include "hrl_config.h"
 #include "DiscreteFeatures.h"
 #include "TreeNodes.h"
 
@@ -19,13 +20,6 @@
 #include <memory>
 #include <vector>
 #include <cmath>
-
-// Parameters for termination control
-#define STUCK_MAX_GAMETICKS     50
-#define TRACKLEAVE_RIGHT        -1.2
-#define TRACKLEAVE_LEFT         1.2
-
-//#define RL_DEBUG
 
 using namespace std;
 

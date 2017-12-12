@@ -18,17 +18,17 @@ void EnvControl::updateStatus(CarState& cs){
     if(speed < 0.1 || angle > 0.9) this->_stuckWatchdog++;
     else this->_stuckWatchdog = 0;
     // If the car is stuck for too long, set the _isStuck flag.
-    if(this->_stuckWatchdog >= STUCK_MAX_GAMETICKS){
+    if(this->_stuckWatchdog >= HRL_STUCK_MAX_GAMETICKS){
         this->_isStuck = true;
-        #ifdef RL_DEBUG
+        #ifdef HRL_DEBUG
             cout << "Car stuck." << endl;
         #endif
     }
     // Check if a termination condition is reached (stuck or out of track)
     double pos = cs.getTrackPos();
-    if(this->_isStuck || (pos < TRACKLEAVE_RIGHT || pos > TRACKLEAVE_LEFT)){
+    if(this->_isStuck || (pos < HRL_TRACKLEAVE_RIGHT || pos > HRL_TRACKLEAVE_LEFT)){
         this->_isTerminated = true;
-        #ifdef RL_DEBUG
+        #ifdef HRL_DEBUG
             cout << "Car ouside of the track." << endl;
         #endif
     }
@@ -38,6 +38,8 @@ void EnvControl::resetStatus(){
     this->_isStuck = false;
     this->_isTerminated = false;
     this->_stuckWatchdog = 0;
+    CarState dummy1;
+    this->_lastState = dummy1;
     CarControl dummy2(0.0, 0.0, 0, 0.0, 0.0);
     this->_lastActions = dummy2;
 };
@@ -159,7 +161,7 @@ double EnvControl::getAbstractReward(CarState& cs){
     // Allow small crossings of the sidelines but punish the leaving of track
     if(this->_isStuck){
         reward = -90.0;
-    } else if(pos < TRACKLEAVE_RIGHT || pos > TRACKLEAVE_LEFT){
+    } else if(pos < HRL_TRACKLEAVE_RIGHT || pos > HRL_TRACKLEAVE_LEFT){
         reward = -30.0;
     } else {
         reward = ds;

@@ -1,10 +1,10 @@
 #include "HRLDriver.h"
 
 HRLDriver::HRLDriver():
-    _env(EnvControl(RL_MAX_EPISODES)),_data(DataHandler()),_lastState(DiscreteFeatures()){
+    _env(EnvControl(HRL_MAX_EPISODES)),_data(DataHandler()),_lastState(DiscreteFeatures()){
     // Create the problem specific task tree
     shared_ptr<Task> root = make_shared<StaticRoot>(0);
-    shared_ptr<Task> speedCtrl = make_shared<DynamicTask>(1, "speedCtrl", RL_ALPHA_START, RL_GAMMA, RL_EPSILON, 3);
+    shared_ptr<Task> speedCtrl = make_shared<DynamicTask>(1, "speedCtrl", HRL_ALPHA_START, HRL_GAMMA, HRL_EPSILON, 3);
     shared_ptr<Task> accel = make_shared<PrimitiveAction>(4, "accelerate");
     shared_ptr<Task> idle = make_shared<PrimitiveAction>(5, "idle");
     shared_ptr<Task> breakk = make_shared<PrimitiveAction>(6, "break");
@@ -20,7 +20,7 @@ HRLDriver::HRLDriver():
     gearCtrl->children.push_back(neutral);
     gearCtrl->children.push_back(downshift);
     root->children.push_back(gearCtrl);
-    shared_ptr<Task> steeringCtrl = make_shared<DynamicTask>(3, "steeringCtrl", RL_ALPHA_START, RL_GAMMA, RL_EPSILON, 5);
+    shared_ptr<Task> steeringCtrl = make_shared<DynamicTask>(3, "steeringCtrl", HRL_ALPHA_START, HRL_GAMMA, HRL_EPSILON, 5);
     shared_ptr<Task> s1 = make_shared<PrimitiveAction>(10, "left 0.5");
     shared_ptr<Task> s2 = make_shared<PrimitiveAction>(11, "left 0.1");
     shared_ptr<Task> s3 = make_shared<PrimitiveAction>(12, "neutral");
@@ -34,10 +34,12 @@ HRLDriver::HRLDriver():
     root->children.push_back(steeringCtrl);
     // Attach the task tree to the driver object
     this->_rootTask = root;
-    #ifdef RL_DEBUG
+    #ifdef HRL_DEBUG
         cout << "*** Task configuration: ***" << endl;
         cout << this->_rootTask->toString(0);
     #endif
+    this->_episodeCnt = 0;
+    this->_actionCnt = 0;
 };
 
 HRLDriver::~HRLDriver(){};
@@ -124,16 +126,19 @@ CarControl HRLDriver::wDrive(CarState cs){
         this->_data.updateStats(rt);
         // Perform the primitive action
         primActions = this->_env.getActions(actionOnPath);
+        this->_actionCnt++;
         if(primActions.getMeta()){
             this->_episodeCnt++;
             // Store the experience once every 500 episodes
-            if((this->_episodeCnt % 50) == 0) this->_data.storeExperience(this->_rootTask);
+            if((this->_episodeCnt % HRL_BACKUP_EPISODE_CNT) == 0) this->_data.storeExperience(this->_rootTask);
             // Write out stats
             this->_data.writeStats();
             // Output to visualize episodes
-            cout << ".";
+            cout << "." << flush;
+            this->_actionCnt = 0;
             if((this->_episodeCnt % 50) == 0) cout << "[" << this->_episodeCnt << "]";
-            cout.flush();
+            // Reset the environment for the next episode
+            this->_env.resetStatus();
         }
     }
     return primActions;
@@ -145,5 +150,5 @@ void HRLDriver::onShutdown(){
 };
 
 void HRLDriver::onRestart(){
-    this->_env.resetStatus();
+
 };

@@ -7,16 +7,21 @@
 
  ***************************************************************************/
 #ifdef WIN32
-#include <WinSock.h>
+		#include <WinSock.h>
 #else
-#include <netdb.h>
-#include <netinet/in.h>
-#include <unistd.h>
+		#include <netdb.h>
+		#include <netinet/in.h>
+		#include <unistd.h>
 #endif
 
+/*** Experiment config file ***/
+#include "hrl_config.h"
+/******************************/
 #include <iostream>
 #include <cstdlib>
 #include <cstdio>
+#include <string>
+#include <sstream>
 #include __DRIVER_INCLUDE__
 
 /*** defines for UDP *****/
@@ -27,14 +32,14 @@
 /************************/
 
 #ifdef WIN32
-typedef sockaddr_in tSockAddrIn;
-#define CLOSE(x) closesocket(x)
-#define INVALID(x) x == INVALID_SOCKET
-#else
-typedef int SOCKET;
-typedef struct sockaddr_in tSockAddrIn;
-#define CLOSE(x) close(x)
-#define INVALID(x) x < 0
+		typedef sockaddr_in tSockAddrIn;
+		#define CLOSE(x) closesocket(x)
+		#define INVALID(x) x == INVALID_SOCKET
+		#else
+		typedef int SOCKET;
+		typedef struct sockaddr_in tSockAddrIn;
+		#define CLOSE(x) close(x)
+		#define INVALID(x) x < 0
 #endif
 
 class __DRIVER_CLASS__;
@@ -67,18 +72,17 @@ int main(int argc, char *argv[]){
     char buf[UDP_MSGLEN];
 
 
-#ifdef WIN32
-     /* WinSock Startup */
+		#ifdef WIN32
+		  	/* WinSock Startup */
+				WSADATA wsaData={0};
+				WORD wVer = MAKEWORD(2,2);
+				int nRet = WSAStartup(wVer,&wsaData);
 
-		WSADATA wsaData={0};
-		WORD wVer = MAKEWORD(2,2);
-		int nRet = WSAStartup(wVer,&wsaData);
-
-		if(nRet == SOCKET_ERROR){
-				std::cout << "Failed to init WinSock library" << std::endl;
-				exit(1);
-    }
-#endif
+				if(nRet == SOCKET_ERROR){
+						std::cout << "Failed to init WinSock library" << std::endl;
+						exit(1);
+		    }
+		#endif
 
 //    parse_args(argc,argv,hostName,serverPort,id,maxEpisodes,maxSteps,trackName,stage);
 
@@ -90,24 +94,26 @@ int main(int argc, char *argv[]){
         exit(1);
     }
 
-    // Print command line option used
-    cout << "***********************************" << endl;
-    cout << "HOST: "   << hostName    << endl;
-    cout << "PORT: " << serverPort  << endl;
-    cout << "ID: "   << id     << endl;
-    cout << "MAX_STEPS: " << maxSteps << endl;
-    cout << "MAX_EPISODES: " << maxEpisodes << endl;
-    cout << "TRACKNAME: " << trackName << endl;
-    if (stage == BaseDriver::WARMUP)
-				cout << "STAGE: WARMUP" << endl;
-		else if (stage == BaseDriver::QUALIFYING)
-				cout << "STAGE:QUALIFYING" << endl;
-		else if (stage == BaseDriver::RACE)
-				cout << "STAGE: RACE" << endl;
-		else
-				cout << "STAGE: UNKNOWN" << endl;
-		cout << "TRAINING MODE: " << mode << endl;
-		cout << "***********************************" << endl;
+		// Print command line option used
+		#ifdef HRL_DEBUG
+		    cout << "***********************************" << endl;
+		    cout << "HOST: "   << hostName    << endl;
+		    cout << "PORT: " << serverPort  << endl;
+		    cout << "ID: "   << id     << endl;
+		    cout << "MAX_STEPS: " << maxSteps << endl;
+		    cout << "MAX_EPISODES: " << maxEpisodes << endl;
+		    cout << "TRACKNAME: " << trackName << endl;
+		    if (stage == BaseDriver::WARMUP)
+						cout << "STAGE: WARMUP" << endl;
+				else if (stage == BaseDriver::QUALIFYING)
+						cout << "STAGE:QUALIFYING" << endl;
+				else if (stage == BaseDriver::RACE)
+						cout << "STAGE: RACE" << endl;
+				else
+						cout << "STAGE: UNKNOWN" << endl;
+				cout << "TRAINING MODE: " << mode << endl;
+				cout << "***********************************" << endl;
+		#endif
     // Create a socket (UDP on IPv4 protocol)
     socketDescriptor = socket(AF_INET, SOCK_DGRAM, 0);
     if (INVALID(socketDescriptor)){
@@ -115,34 +121,60 @@ int main(int argc, char *argv[]){
         exit(1);
     }
 
-    // Set some fields in the serverAddress structure.
-    serverAddress.sin_family = hostInfo->h_addrtype;
-    memcpy((char *) &serverAddress.sin_addr.s_addr,
-           hostInfo->h_addr_list[0], hostInfo->h_length);
-    serverAddress.sin_port = htons(serverPort);
-
 		/**** Driver agent gets declared here ***/																	// <----
     tDriver d;
     strcpy(d.trackName,trackName);
     d.stage = stage;
 
-    bool shutdownClient=false;
     unsigned long curEpisode=0;
 
 		/**** Initialization routine of driver agent ***/														// <----
 		float angles[19];
 		d.init(angles, mode, expFilePath);
 
+		#ifdef HRL_DEBUG
+				if(mode){
+						cout << "********** Begin driving **********" << endl;
+				} else {
+						cout << "********** Begin learning *********" << endl;
+				}
+		#endif
+
+		/************** Create as much instances of the torcs game as needed ****************/
+		for(int server = HRL_DEFAULT_SERVERPORT; server <= HRL_MAX_SERVERPORT; server++){
+				// Build system call for the torcs server
+				stringstream ss;
+				ss << "torcs -r " << HRL_RACECONFIG_BASE << "-" << server << ".xml ";
+				#ifndef __COMMUNICATION_VERBOSE__
+						ss << ">/dev/null 2>&1 ";		// Surpress output from torcs
+				#endif
+				ss << "&";	// Immediate return
+				system(ss.str().c_str());
+		}
+		// Give the servers a little head start for this first startup
+		usleep(3000000);
+
 		// MAIN LOOP while shutdownClient==false && ( (++curEpisode) != maxEpisodes)
     do {
+				/*************************** Server definition **********************************/
+				// Make sure, the serverPort is inbetween 3001 and 3009
+				serverPort = (serverPort > HRL_MAX_SERVERPORT || serverPort < HRL_DEFAULT_SERVERPORT) ? HRL_DEFAULT_SERVERPORT : serverPort;
+				// Set some fields in the serverAddress structure.
+		    serverAddress.sin_family = hostInfo->h_addrtype;
+		    memcpy((char *) &serverAddress.sin_addr.s_addr,
+		           hostInfo->h_addr_list[0], hostInfo->h_length);
+		    serverAddress.sin_port = htons(serverPort);
+				#ifdef __COMMUNICATION_VERBOSE__
+						cout << "Start interaction with serverPort: " << serverPort << endl;
+				#endif
         /************************ UDP client identification *****************************/
         while(1) {
         		string initString = SimpleParser::stringify(string("init"),angles,19);
-						#ifdef __COMMUNICATION_VERBOSE__
+						#ifdef __UDP_CLIENT_VERBOSE__
             		cout << "Sending id to server: " << id << endl;
 						#endif
             initString.insert(0,id);
-						#ifdef __COMMUNICATION_VERBOSE__
+						#ifdef __UDP_CLIENT_VERBOSE__
             		cout << "Sending init string to the server: " << initString << endl;
 						#endif
             if (sendto(socketDescriptor, initString.c_str(), initString.length(), 0,
@@ -166,7 +198,7 @@ int main(int argc, char *argv[]){
                 if (numRead < 0){
                     cerr << "didn't get response from server...";
                 } else {
-										#ifdef __COMMUNICATION_VERBOSE__
+										#ifdef __UDP_CLIENT_VERBOSE__
                 				cout << "Received: " << buf << endl;
 										#endif
 										if (strcmp(buf,"***identified***")==0)
@@ -175,7 +207,9 @@ int main(int argc, char *argv[]){
 	      		}
 				// END WHILE: UDP client identification
         }
-
+				#ifdef __COMMUNICATION_VERBOSE__
+						cout << "identification done." << endl;
+				#endif
 				unsigned long currentStep=0;
 				/************************ Continuous incoming data processing *****************/
         while(1){
@@ -194,26 +228,9 @@ int main(int argc, char *argv[]){
                     CLOSE(socketDescriptor);
                     exit(1);
                 }
-#ifdef __UDP_CLIENT_VERBOSE__
-                cout << "Received: " << buf << endl;
-#endif
-								/**** Driver shutdown routine ***/															// <----
-                if (strcmp(buf,"***shutdown***")==0){
-                    d.onShutdown();
-                    //shutdownClient = true;
-										#ifdef __COMMUNICATION_VERBOSE__
-                    		cout << "Client Shutdown" << endl;
-										#endif
-                    break;
-                }
-								/**** Driver restart routine ***/																// <----
-                if (strcmp(buf,"***restart***")==0){
-                    d.onRestart();
-										#ifdef __COMMUNICATION_VERBOSE__
-                    		cout << "Client Restart" << endl;
-										#endif
-                    break;
-                }
+								#ifdef __UDP_CLIENT_VERBOSE__
+										cout << "Received: " << buf << endl;
+								#endif
                 /* Compute the action to send to the server or restart if
 									 the maximum of simulation steps is reached. 						*/
 									/**** Main drivining routine ***/															// <----
@@ -221,6 +238,33 @@ int main(int argc, char *argv[]){
                 		string action = d.drive(string(buf));
                 		memset(buf, 0x0, UDP_MSGLEN);
 										sprintf(buf,"%s",action.c_str());
+										/************* SERVER RESTART AND SWITCHING ************************/
+										/* A restart is requested from the agent, so restart the current server
+											 and switch to the next available one. */
+										if(action.find("(meta 1)") != string::npos){
+												stringstream ss1;
+												// First force a server shutdown for the current server
+												ss1 << "lsof -i udp:" << serverPort << " | awk 'NR!=1 {print $2}' | xargs kill";
+												#ifndef __COMMUNICATION_VERBOSE__
+														ss1 << ">/dev/null 2>&1 ";		// Surpress output from torcs
+												#endif
+												system(ss1.str().c_str());
+												// Now open it up again...
+												stringstream ss2;
+												ss2 << "torcs -r " << HRL_RACECONFIG_BASE << "-" << serverPort << ".xml ";
+												#ifndef __COMMUNICATION_VERBOSE__
+														ss2 << ">/dev/null 2>&1 ";		// Surpress output from torcs
+												#endif
+												ss2 << "&";	// Immediate return
+												system(ss2.str().c_str());
+												// ... and don't wait for it but go to the next server
+												serverPort++;
+												d.onRestart();
+												#ifdef __COMMUNICATION_VERBOSE__
+														cout << "Client Restart" << endl;
+												#endif
+												break;
+										}
 								}
 
                 if (sendto(socketDescriptor, buf, strlen(buf)+1, 0,
@@ -230,10 +274,10 @@ int main(int argc, char *argv[]){
                     CLOSE(socketDescriptor);
                     exit(1);
                 }
-#ifdef __UDP_CLIENT_VERBOSE__
-                else
-                    cout << "Sending " << buf << endl;
-#endif
+								#ifdef __UDP_CLIENT_VERBOSE__
+                		else
+                    		cout << "Sending " << buf << endl;
+								#endif
             } else {
 								#ifdef __COMMUNICATION_VERBOSE__
                 		cout << "** Server did not respond in 1 second.\n";
@@ -242,12 +286,13 @@ int main(int argc, char *argv[]){
 				// END WHILE: Continuous incoming data processing
         }
 		// END DO: MAIN LOOP
-    } while(shutdownClient==false && ( (++curEpisode) != maxEpisodes) );
+		} while((++curEpisode) != maxEpisodes);
 
 		// Clean up before leaving
-    if (shutdownClient==false)
-				d.onShutdown();
+    d.onShutdown();
     CLOSE(socketDescriptor);
+		/************** Close all running instances of torcs *******************************/
+		system("pkill torcs");
 #ifdef WIN32
     WSACleanup();
 #endif
@@ -261,9 +306,9 @@ void parse_args(int argc, char *argv[], char *hostName, unsigned int &serverPort
     int		i;
 
     // Set default values
-    maxEpisodes=0;
+    maxEpisodes=HRL_MAX_EPISODES;
     maxSteps=0;
-    serverPort=3001;
+    serverPort=HRL_DEFAULT_SERVERPORT;
     strcpy(hostName,"localhost");
     strcpy(id,"SCR");
     strcpy(trackName,"unknown");
