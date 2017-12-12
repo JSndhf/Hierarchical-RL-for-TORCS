@@ -22,6 +22,7 @@
 #include <cstdio>
 #include <string>
 #include <sstream>
+#include <chrono>
 #include __DRIVER_INCLUDE__
 
 /*** defines for UDP *****/
@@ -144,7 +145,7 @@ int main(int argc, char *argv[]){
 		for(int server = HRL_DEFAULT_SERVERPORT; server <= HRL_MAX_SERVERPORT; server++){
 				// Build system call for the torcs server
 				stringstream ss;
-				ss << "torcs -r " << HRL_RACECONFIG_BASE << "-" << server << ".xml ";
+				ss << "torcs -nofuel -nodamage -nolaptime -t 1000000  -r " << HRL_RACECONFIG_BASE << "-" << server << ".xml ";
 				#ifndef __COMMUNICATION_VERBOSE__
 						ss << ">/dev/null 2>&1 ";		// Surpress output from torcs
 				#endif
@@ -152,10 +153,11 @@ int main(int argc, char *argv[]){
 				system(ss.str().c_str());
 		}
 		// Give the servers a little head start for this first startup
-		usleep(3000000);
+		usleep(2000000);
 
 		// MAIN LOOP while shutdownClient==false && ( (++curEpisode) != maxEpisodes)
     do {
+				//auto timerStart = std::chrono::high_resolution_clock::now();
 				/*************************** Server definition **********************************/
 				// Make sure, the serverPort is inbetween 3001 and 3009
 				serverPort = (serverPort > HRL_MAX_SERVERPORT || serverPort < HRL_DEFAULT_SERVERPORT) ? HRL_DEFAULT_SERVERPORT : serverPort;
@@ -210,7 +212,6 @@ int main(int argc, char *argv[]){
 				#ifdef __COMMUNICATION_VERBOSE__
 						cout << "identification done." << endl;
 				#endif
-				unsigned long currentStep=0;
 				/************************ Continuous incoming data processing *****************/
         while(1){
             // wait until answer comes back, for up to UDP_CLIENT_TIMEUOT micro sec
@@ -233,51 +234,49 @@ int main(int argc, char *argv[]){
 								#endif
                 /* Compute the action to send to the server or restart if
 									 the maximum of simulation steps is reached. 						*/
-									/**** Main drivining routine ***/															// <----
-								if ( (++currentStep) != maxSteps){
-                		string action = d.drive(string(buf));
-                		memset(buf, 0x0, UDP_MSGLEN);
-										sprintf(buf,"%s",action.c_str());
-										/************* SERVER RESTART AND SWITCHING ************************/
-										/* A restart is requested from the agent, so restart the current server
-											 and switch to the next available one. */
-										if(action.find("(meta 1)") != string::npos){
-												stringstream ss1;
-												// First force a server shutdown for the current server
-												ss1 << "lsof -i udp:" << serverPort << " | awk 'NR!=1 {print $2}' | xargs kill";
-												#ifndef __COMMUNICATION_VERBOSE__
-														ss1 << ">/dev/null 2>&1 ";		// Surpress output from torcs
-												#endif
-												system(ss1.str().c_str());
-												// Now open it up again...
-												stringstream ss2;
-												ss2 << "torcs -r " << HRL_RACECONFIG_BASE << "-" << serverPort << ".xml ";
-												#ifndef __COMMUNICATION_VERBOSE__
-														ss2 << ">/dev/null 2>&1 ";		// Surpress output from torcs
-												#endif
-												ss2 << "&";	// Immediate return
-												system(ss2.str().c_str());
-												// ... and don't wait for it but go to the next server
-												serverPort++;
-												d.onRestart();
-												#ifdef __COMMUNICATION_VERBOSE__
-														cout << "Client Restart" << endl;
-												#endif
-												break;
+								/**** Main drivining routine ***/															// <----
+								string action = d.drive(string(buf));
+								memset(buf, 0x0, UDP_MSGLEN);
+								sprintf(buf,"%s",action.c_str());
+								/************* SERVER RESTART AND SWITCHING ************************/
+								/* A restart is requested from the agent, so restart the current server
+									 and switch to the next available one. */
+								if(action.find("(meta 1)") != string::npos){
+										stringstream ss1;
+										// First force a server shutdown for the current server
+										ss1 << "lsof -i udp:" << serverPort << " | awk 'NR!=1 {print $2}' | xargs kill";
+										#ifndef __COMMUNICATION_VERBOSE__
+												ss1 << ">/dev/null 2>&1 ";		// Surpress output from torcs
+										#endif
+										system(ss1.str().c_str());
+										// Now open it up again...
+										stringstream ss2;
+										ss2 << "torcs -nofuel -nodamage -nolaptime -t 1000000 -r " << HRL_RACECONFIG_BASE << "-" << serverPort << ".xml ";
+										#ifndef __COMMUNICATION_VERBOSE__
+												ss2 << ">/dev/null 2>&1 ";		// Surpress output from torcs
+										#endif
+										ss2 << "&";	// Immediate return
+										system(ss2.str().c_str());
+										// ... and don't wait for it but go to the next server
+										serverPort++;
+										d.onRestart();
+										#ifdef __COMMUNICATION_VERBOSE__
+												cout << "Client Restart" << endl;
+										#endif
+										break;
+								} else {
+										if (sendto(socketDescriptor, buf, strlen(buf)+1, 0,
+															 (struct sockaddr *) &serverAddress,
+															 sizeof(serverAddress)) < 0){
+												cerr << "cannot send data ";
+												CLOSE(socketDescriptor);
+												exit(1);
 										}
+										#ifdef __UDP_CLIENT_VERBOSE__
+								    else
+								    		cout << "Sending " << buf << endl;
+										#endif
 								}
-
-                if (sendto(socketDescriptor, buf, strlen(buf)+1, 0,
-                           (struct sockaddr *) &serverAddress,
-                           sizeof(serverAddress)) < 0){
-                    cerr << "cannot send data ";
-                    CLOSE(socketDescriptor);
-                    exit(1);
-                }
-								#ifdef __UDP_CLIENT_VERBOSE__
-                		else
-                    		cout << "Sending " << buf << endl;
-								#endif
             } else {
 								#ifdef __COMMUNICATION_VERBOSE__
                 		cout << "** Server did not respond in 1 second.\n";

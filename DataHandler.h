@@ -23,6 +23,7 @@ using namespace std;
 class DataHandler {
   private:
     int _episodeCnt;
+    long long _episodeActionCnt;
     double _episodeReward;
     vector<shared_ptr<DynamicTask>> _getDynamicTasks(shared_ptr<Task>);
     shared_ptr<Task> _findTaskInTree(shared_ptr<Task>, char);

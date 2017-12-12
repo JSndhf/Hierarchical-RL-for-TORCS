@@ -1,6 +1,6 @@
 #include "DataHandler.h"
 
-DataHandler::DataHandler():_episodeCnt(0),_episodeReward(0.0){};
+DataHandler::DataHandler():_episodeCnt(0),_episodeActionCnt(0),_episodeReward(0.0){};
 DataHandler::~DataHandler(){};
 
 /*** getDynamicTasks *************************************************
@@ -148,14 +148,16 @@ bool DataHandler::loadExperience(string srcPath, shared_ptr<Task> taskTree){
 }
 
 void DataHandler::updateStats(double addReward){
+    this->_episodeActionCnt++;
     this->_episodeReward += addReward;
 };
 
 void DataHandler::writeStats(){
     ofstream statFile;
     statFile.open("data/stats.txt", ios::app);
-    statFile << this->_episodeCnt << "; " << this->_episodeReward << ";\n";
+    statFile << this->_episodeCnt << "; " << this->_episodeActionCnt << "; " << this->_episodeReward << ";\n";
     statFile.close();
+    this->_episodeActionCnt = 0;
     this->_episodeReward = 0.0;
     this->_episodeCnt++;
 }

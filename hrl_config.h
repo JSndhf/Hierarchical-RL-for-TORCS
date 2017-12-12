@@ -24,6 +24,11 @@
 #define HRL_GAMMA                   0.99
 #define HRL_MAX_EPISODES            100000
 
+/***** Rewarding ****/
+#define HRL_DSFACTOR                 0.2
+#define HRL_STUCK_NEGREWARD         -10.0
+#define HRL_LEAVE_NEGREWARD         -4.0
+
 /***** Data handling ****/
 #define HRL_BACKUP_EPISODE_CNT      500
 

@@ -39,7 +39,6 @@ HRLDriver::HRLDriver():
         cout << this->_rootTask->toString(0);
     #endif
     this->_episodeCnt = 0;
-    this->_actionCnt = 0;
 };
 
 HRLDriver::~HRLDriver(){};
@@ -122,11 +121,11 @@ CarControl HRLDriver::wDrive(CarState cs){
         /**************************************************************************/
         // Store the current action stack to learn from its outcome in the next iteration
         this->_lastActionsStack = currActionStack;
-        // Update the statistics
-        this->_data.updateStats(rt);
         // Perform the primitive action
         primActions = this->_env.getActions(actionOnPath);
-        this->_actionCnt++;
+        // Update the statistics
+        this->_data.updateStats(rt);
+        // If the reset is called, do some backup
         if(primActions.getMeta()){
             this->_episodeCnt++;
             // Store the experience once every 500 episodes
@@ -135,7 +134,6 @@ CarControl HRLDriver::wDrive(CarState cs){
             this->_data.writeStats();
             // Output to visualize episodes
             cout << "." << flush;
-            this->_actionCnt = 0;
             if((this->_episodeCnt % 50) == 0) cout << "[" << this->_episodeCnt << "]";
             // Reset the environment for the next episode
             this->_env.resetStatus();

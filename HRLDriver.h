@@ -37,7 +37,6 @@ class HRLDriver:public WrapperBaseDriver {
     vector<shared_ptr<Task>> _lastActionsStack;
     bool _isLearning;
     int _episodeCnt;
-    int _actionCnt;
   public:
     /* Constructor - includes creating the envControl and taskTree,
        as well as preparing file handling and logging.*/
