@@ -34,7 +34,7 @@ HRLDriver::HRLDriver():
     root->children.push_back(steeringCtrl);
     // Attach the task tree to the driver object
     this->_rootTask = root;
-    cout << "*** Task configuration: ***" << endl;
+    cout << endl << "*** Task configuration: ***" << endl << endl;;
     cout << this->_rootTask->toString(0);
     this->_episodeCnt = 0;
 };
@@ -81,7 +81,7 @@ CarControl HRLDriver::wDrive(CarState cs){
 
         // Get the overall reward
         double rt = this->_env.getAbstractReward(cs);
-
+        
         /********* BACKWARDS LEARNING *********************************************/
         /**************************************************************************/
         // For each dynamic task in the stack of actions of the last state

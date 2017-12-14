@@ -83,10 +83,10 @@ bool DataHandler::storeExperience(shared_ptr<Task> taskTree){
             auto expNode = taskNode.append_child("cValNode");
             expNode.append_attribute("sa") = cval.first.c_str();
             expNode.append_child(pugi::node_cdata).set_value(
-                    to_string(cval.second[RL_CVAL_POS]).c_str()
+                    to_string(cval.second[HRL_CVAL_POS]).c_str()
                 );
             expNode.append_child(pugi::node_cdata).set_value(
-                    to_string(cval.second[RL_CTILDEVAL_POS]).c_str()
+                    to_string(cval.second[HRL_CTILDEVAL_POS]).c_str()
                 );
         }
     }
@@ -137,7 +137,7 @@ bool DataHandler::loadExperience(string srcPath, shared_ptr<Task> taskTree){
                 task->cvals.insert(pair<string, array<double, 2>>(
                         (string) xmlCValNode.attribute("as").value(),
                         array<double, 2>
-                          {{ cvalSet[RL_CVAL_POS].node().text().as_double(), cvalSet[RL_CTILDEVAL_POS].node().text().as_double() }}
+                          {{ cvalSet[HRL_CVAL_POS].node().text().as_double(), cvalSet[HRL_CTILDEVAL_POS].node().text().as_double() }}
                         )
                     );
             }

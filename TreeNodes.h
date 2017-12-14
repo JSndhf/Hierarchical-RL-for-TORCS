@@ -8,14 +8,6 @@
 #ifndef TREENODES_H_
 #define TREENODES_H_
 
-// Decaying learning and exploration over the long term
-#ifdef RL_LIN_ALPHA_DECAY
-    #define RL_MIN_ALPHA    0.1
-#endif
-#ifdef RL_LIN_EPSILON_DECAY
-    #define RL_MIN_EPSILON  0.05
-#endif
-
 #include <map>
 #include <array>
 #include <vector>
@@ -31,8 +23,7 @@
 #include "hrl_config.h"
 #include "DiscreteFeatures.h"
 
-#define RL_CVAL_POS       0
-#define RL_CTILDEVAL_POS  1
+#define ROUND_DBL5(x) ((double)((int)((x)*1000)) / 1000)
 
 using namespace std;
 

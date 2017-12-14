@@ -15,22 +15,17 @@ void EnvControl::updateStatus(CarState& cs){
     // 45 degrees (pi/4) as in [Karavolos 2013])
     double angle = fabs(cs.getAngle());
     double speed = cs.getSpeedX() + cs.getSpeedY();
+
     if(speed < 0.1 || angle > 0.9) this->_stuckWatchdog++;
     else this->_stuckWatchdog = 0;
     // If the car is stuck for too long, set the _isStuck flag.
     if(this->_stuckWatchdog >= HRL_STUCK_MAX_GAMETICKS){
         this->_isStuck = true;
-        #ifdef HRL_DEBUG
-            cout << "Car stuck." << endl;
-        #endif
     }
-    // Check if a termination condition is reached (stuck or out of track)
+    // Check if a termination condition is reached (stucked or out of track)
     double pos = cs.getTrackPos();
     if(this->_isStuck || (pos < HRL_TRACKLEAVE_RIGHT || pos > HRL_TRACKLEAVE_LEFT)){
         this->_isTerminated = true;
-        #ifdef HRL_DEBUG
-            cout << "Car ouside of the track." << endl;
-        #endif
     }
 };
 
@@ -67,7 +62,7 @@ DiscreteFeatures EnvControl::getFeatures(CarState& cs){
     // For now, a weighted average over the angles and distanes is used to
     // calculate the curvature which is discretized afterwards.
     double sensorAngles[] = {-60,-45,-30,-20,-15,-10,-5,0,5,10,15,20,30,45,60};
-    double res;
+    double res = 0;
     double angleDistanceSum = 0;
     double distanceSum = 0;
     for(int sens = 2; sens < 17; sens++){
@@ -83,6 +78,13 @@ DiscreteFeatures EnvControl::getFeatures(CarState& cs){
                         + (res > -30.0) + (res > -22.5) + (res > -15.0) + (res > -7.5)
                         + (res > 7.5) + (res > 15.0) + (res > 22.5) + (res > 30.0)
                         + (res > 45.0) + (res > 60.0));
+    #ifdef HRL_DEBUG
+        cout << "|";
+        cout << setfill(' ') << setw((int)dPhi.curvature) << " ";
+        cout << "o";
+        cout << setfill(' ') << setw(10 - (int)dPhi.curvature) << " ";
+        cout << "|" << endl;
+    #endif
     /***** TrackPos **********************************************************/
     double pos = cs.getTrackPos();
     // Discretization table:
@@ -154,18 +156,13 @@ double EnvControl::getAbstractReward(CarState& cs){
     // rewards for leaving the track and for standing still seek to avoid
     // undesired states.
     double reward;
-    double ds = fabs(cs.getDistFromStart() - this->_lastState.getDistFromStart());
+    double ds = fabs((cs.getDistFromStart() - this->_lastState.getDistFromStart()) * HRL_DSFACTOR);
+
     // Starting race negative distFromStart hack, make rewards smaller
-    ds = (ds > 10.0) ? 0 : ds*HRL_DSFACTOR;
-    double pos = cs.getTrackPos();
-    // Allow small crossings of the sidelines but punish the leaving of track
-    if(this->_isStuck){
-        reward = HRL_STUCK_NEGREWARD;
-    } else if(pos < HRL_TRACKLEAVE_RIGHT || pos > HRL_TRACKLEAVE_LEFT){
-        reward = HRL_LEAVE_NEGREWARD;
-    } else {
-        reward = ds;
-    }
+    ds = (ds > 10.0) ? 0 : ds;
+    // Positive rewards for good actions, negative ones for bad termination
+    if(this->_isTerminated) reward = HRL_TERMINATE_NEGREWARD;
+    else reward = ds;
     // Save the current state
     this->_lastState = cs;
     return reward;

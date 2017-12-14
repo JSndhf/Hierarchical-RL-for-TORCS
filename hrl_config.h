@@ -22,17 +22,21 @@
 #define HRL_ALPHA_START             0.8
 #define HRL_EPSILON                 0.2
 #define HRL_GAMMA                   0.99
-#define HRL_MAX_EPISODES            1500
+#define HRL_MAX_EPISODES            200
 #define HRL_ALPHA_DECAY             ((0.8-0.1)/HRL_MAX_EPISODES)
 #define HRL_EPSILON_DECAY           ((0.2-0.05)/HRL_MAX_EPISODES)
 
 /***** Rewarding ****/
-#define HRL_DSFACTOR                 0.2
-#define HRL_STUCK_NEGREWARD         -10.0
-#define HRL_LEAVE_NEGREWARD         -4.0
+#define HRL_DSFACTOR                1000
+#define HRL_TERMINATE_NEGREWARD     -10.0
+
 
 /***** Data handling ****/
 #define HRL_BACKUP_EPISODE_CNT      500
+
+/***** MAXQ-Q specifics ****/
+#define HRL_CVAL_POS       0
+#define HRL_CTILDEVAL_POS  1
 
 /***** Debugging ****/
 //#define HRL_DEBUG

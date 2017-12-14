@@ -89,27 +89,29 @@ pair<shared_ptr<Task>, double> DynamicTask::_getInternalMaxCValue(string feature
     shared_ptr<Task> bestAction = nullptr;
     for(auto const &cval : this->cvals){
         // If all possible actions has been considered, the algorithm can stop savely
-        if((cval.first.find(featureValues) != string::npos) && aCnt < this->_totalActionCount){
+        if(aCnt == this->_totalActionCount) break;
+        // Else loop further through the cvals and check if a better value can be found
+        if(cval.first.find(featureValues) != std::string::npos){
             // If the value of the examined action is better than the last one, take this.
-            if(cval.second[RL_CTILDEVAL_POS] > bestValue){
-                char tmpActionID = (char) strtoul(cval.first.substr(cval.first.length() - 3,2).c_str(), NULL, 16);
+            if(cval.second[HRL_CTILDEVAL_POS] > bestValue){
+                char tmpActionID = (char)stoi(cval.first.substr(cval.first.size() - 3), nullptr, 16);
                 // Only consider allowed actions
                 for(unsigned int itm = 0; itm < allowedActions.size(); itm++){
                     if(allowedActions[itm]->id == tmpActionID){
-                        bestValue = cval.second[RL_CTILDEVAL_POS];
+                        bestValue = cval.second[HRL_CTILDEVAL_POS];
                         bestAction = allowedActions[itm];
-                        break;
+                        break; // only the loop over allowedActions
                     }
                 }
             }
             aCnt++;
         } else {
-            break;
+            continue; // next cval
         }
     }
     // If no best action could be found, choose a random one
     if(bestAction == nullptr)
-        bestAction = allowedActions[(int)(this->_prob(this->_gen) * 100 ) % (allowedActions.size() - 1)];
+        bestAction = allowedActions[(int)(this->_prob(this->_gen) * 100 ) % (int)allowedActions.size()];
     // Return the best action and it's value
     return make_pair( bestAction, bestValue );
 }
@@ -123,7 +125,7 @@ double DynamicTask::_getInternalCValue(string featActionPair){
     map<string, array<double, 2>>::iterator it;
     it = this->cvals.find(featActionPair);
     if(it != this->cvals.end()){
-        return it->second[RL_CTILDEVAL_POS];
+        return it->second[HRL_CTILDEVAL_POS];
     // If the entry doesn't exist until now, return 0.0
     } else {
         return 0.0;
@@ -140,7 +142,7 @@ double DynamicTask::_getExternalCValue(string featActionPair){
     map<string, array<double, 2>>::iterator it;
     it = this->cvals.find(featActionPair);
     if(it != this->cvals.end()){
-        return it->second[RL_CVAL_POS];
+        return it->second[HRL_CVAL_POS];
     // If the entry doesn't exist until now, return 0.0
     } else {
         return 0.0;
@@ -161,10 +163,10 @@ void DynamicTask::learn(DiscreteFeatures& currentFullFeatures, vector<shared_ptr
     // Get this task's portion of the full feature set.
     string currentFeatures = this->getTaskFeatureString(currentFullFeatures);
     // Determine the Q-learning like best action and its value regarding the current state
-    pair<shared_ptr<Task>, double> maxIntCValue = this->_getInternalMaxCValue(currentFeatures, allowedActions);
+    pair<shared_ptr<Task>, double> maxIntCActionValue = this->_getInternalMaxCValue(currentFeatures, allowedActions);
     // Build the current feature-action pair
     stringstream aStarId;
-    aStarId << std::setfill('0') << std::setw(2) << std::hex << (int) maxIntCValue.first->id;
+    aStarId << std::setfill('0') << std::setw(2) << std::hex << (int)maxIntCActionValue.first->id;
     string currentFeatureAStarPair = currentFeatures + aStarId.str();
     // Remember the current feature-best action pair
     this->_featureAStarPair = currentFeatureAStarPair;
@@ -175,36 +177,45 @@ void DynamicTask::learn(DiscreteFeatures& currentFullFeatures, vector<shared_ptr
     double Ctilde_sLast_aPiLast = this->_getInternalCValue(this->_lastFeatureAPiPair);
     // Get the internal (pseudo-)reward for the last state-action pair
     double Rtilde_sNow = this->_getPseudoReward(currentFeatures);
-    double Ctilde_sNow_aStar = maxIntCValue.second;
+    double Ctilde_sNow_aStar = maxIntCActionValue.second;
     double V_aStar_sNow;
+
     // Check if aStar is a primitive or composite action
-    if(!maxIntCValue.first->isPrimitive){
-        V_aStar_sNow = maxIntCValue.first->getExternalMaxCValue(currentFullFeatures);
+    if(!(maxIntCActionValue.first->isPrimitive)){
+        V_aStar_sNow = maxIntCActionValue.first->getExternalMaxCValue(currentFullFeatures);
     } else {
         // aStar is primitive, so take the reward as V_aStar_s1
         V_aStar_sNow = reward;
     }
-    // Update the internal completion value for the last feature-action pair
-    Ctilde_sLast_aPiLast = (1.0 - this->_alpha) * Ctilde_sLast_aPiLast
-                            + this->_alpha * (Rtilde_sNow + Ctilde_sNow_aStar + V_aStar_sNow);
 
+    #ifdef HRL_DEBUG
+        cout << "\tC~ = (1-" << this->_alpha << ") * " << Ctilde_sLast_aPiLast;
+        cout << " + " << this->_alpha << " * (" << Rtilde_sNow << " + " << Ctilde_sNow_aStar << " + " << V_aStar_sNow << ")";
+    #endif
+    // Update the internal completion value for the last feature-action pair
+    Ctilde_sLast_aPiLast = ROUND_DBL5((1.0 - this->_alpha) * Ctilde_sLast_aPiLast + this->_alpha * (Rtilde_sNow + Ctilde_sNow_aStar + V_aStar_sNow));
+    #ifdef HRL_DEBUG
+        cout << " = " << Ctilde_sLast_aPiLast << endl;
+    #endif
     /*** Learning the INTERNAL completion function ***/
     double C_sLast_aPiLast = this->_getExternalCValue(this->_lastFeatureAPiPair);
     double C_sNow_aStar = this->_getExternalCValue(currentFeatureAStarPair);
     // As V_aStar_now is just the same as above, no additional data is needed.
-    C_sLast_aPiLast = (1.0 - this->_alpha) * C_sLast_aPiLast
-                       + this->_alpha * (C_sNow_aStar + V_aStar_sNow);
+    #ifdef HRL_DEBUG
+        cout << "\tC = (1-" << this->_alpha << ") * " << C_sLast_aPiLast;
+        cout << " + " << this->_alpha << " * (" << C_sNow_aStar << " + " << V_aStar_sNow << ")";
+    #endif
+    C_sLast_aPiLast = ROUND_DBL5((1.0 - this->_alpha) * C_sLast_aPiLast + this->_alpha * (C_sNow_aStar + V_aStar_sNow));
+    #ifdef HRL_DEBUG
+        cout << " = " << C_sLast_aPiLast << endl;
+    #endif
 
     /****** UPDATE ***********************************************************/
     /*************************************************************************/
     array<double, 2> cvalUpdate;
-    cvalUpdate[RL_CVAL_POS] = C_sLast_aPiLast;
-    cvalUpdate[RL_CTILDEVAL_POS] = Ctilde_sLast_aPiLast;
+    cvalUpdate[HRL_CVAL_POS] = C_sLast_aPiLast;
+    cvalUpdate[HRL_CTILDEVAL_POS] = Ctilde_sLast_aPiLast;
     this->cvals[this->_lastFeatureAPiPair] = cvalUpdate;
-    /****** DECAYING OF LEARNING PARAMETERS **********************************/
-    /*************************************************************************/
-    this->_alpha -= HRL_ALPHA_DECAY;
-    this->_epsilon -= HRL_EPSILON_DECAY;
 };
 
 /*** getQValue *****************************************************
@@ -219,12 +230,14 @@ double DynamicTask::getExternalMaxCValue(DiscreteFeatures& fullFeatures){
     int aCnt = 0;
     for(auto const &cval : this->cvals){
         // If all possible actions has been considered, the algorithm can stop savely
-        if((cval.first.find(featureValues) != string::npos) && aCnt < this->_totalActionCount){
+        if(aCnt == this->_totalActionCount) break;
+        // Check if the current features are part of the feat-action string
+        if(cval.first.find(featureValues) != string::npos){
             // If the value is better than the current one, update.
-            currBestValue = cval.second[RL_CVAL_POS] > currBestValue ? cval.second[RL_CVAL_POS] : currBestValue;
+            currBestValue = cval.second[HRL_CVAL_POS] > currBestValue ? cval.second[HRL_CVAL_POS] : currBestValue;
             aCnt++;
         } else {
-            break;
+            continue; // next cval
         }
     }
     return currBestValue;
@@ -244,17 +257,19 @@ shared_ptr<Task> DynamicTask::getActionSelection(DiscreteFeatures& fullFeatures,
     // has already been set or another search through the cvals has to be done
     if(this->_featureAStarPair.find(featureValues) == string::npos){
         // The current featureValues are not represented so get another aStar
-        pair<shared_ptr<Task>, double> maxIntCValue = this->_getInternalMaxCValue(featureValues, allowedActions);
-        actionId = maxIntCValue.first->id;
+        pair<shared_ptr<Task>, double> maxIntCActionValue = this->_getInternalMaxCValue(featureValues, allowedActions);
+        actionId = maxIntCActionValue.first->id;
+    } else {
+        // Get the aStar action from the string
+        actionId = (char)stoi(this->_featureAStarPair.substr(this->_featureAStarPair.size() - 3), nullptr, 16);
     }
-    // Check if the best actions id (or the default id 0 which will never be
-    // found 'cause it's the root) is allowed
+    // Check if the best actions id is allowed
     for(unsigned int itm = 0; itm < allowedActions.size(); itm++){
         if(allowedActions[itm]->id == actionId) aStar = allowedActions[itm];
     }
     // Select randomly if no action could be found before
     if(aStar == nullptr)
-        aStar = allowedActions[(int)(this->_prob(this->_gen) * 100 ) % (allowedActions.size() - 1)];
+        aStar = allowedActions[(int)(this->_prob(this->_gen) * 100 ) % (int)allowedActions.size()];
     /****** Exploitation vs. exploration decision ****************************/
     // **** Current version uses epsilon-greedy exploration. ****
     //    The best action should be selected with a propability of 1-epsilon
@@ -263,7 +278,7 @@ shared_ptr<Task> DynamicTask::getActionSelection(DiscreteFeatures& fullFeatures,
     } else {
         // Get a random action NOT including the best action
         do {
-            aPi = allowedActions[(int)(this->_prob(this->_gen) * 100 ) % (allowedActions.size() - 1)];
+            aPi = allowedActions[(int)(this->_prob(this->_gen) * 100 ) % (int)allowedActions.size()];
         } while(aPi->id == aStar->id);
     }
     // Store the feature-action pair for usage in next learning cycle

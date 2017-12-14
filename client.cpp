@@ -29,7 +29,7 @@
 #define UDP_MSGLEN 1000
 #define UDP_CLIENT_TIMEUOT 1000000
 //#define __UDP_CLIENT_VERBOSE__
-#define __COMMUNICATION_VERBOSE__
+//#define __COMMUNICATION_VERBOSE__
 /************************/
 
 #ifdef WIN32
@@ -133,9 +133,9 @@ int main(int argc, char *argv[]){
 		float angles[19];
 		d.init(angles, mode, expFilePath);
 		if(mode){
-				cout << "********** Begin driving **********" << endl << endl;
+				cout << endl << "********** Begin driving **********" << endl;
 		} else {
-				cout << "********** Begin learning *********" << endl << endl;
+				cout << endl << "********** Begin learning *********" << endl;
 		}
 		/************** ONLY FOR LEARNING MODE **********************************************/
 		if(mode){

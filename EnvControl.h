@@ -15,6 +15,8 @@
 #include "DiscreteFeatures.h"
 #include "TreeNodes.h"
 
+#include <iostream>
+#include <iomanip>
 #include <string>
 #include <sstream>
 #include <memory>
