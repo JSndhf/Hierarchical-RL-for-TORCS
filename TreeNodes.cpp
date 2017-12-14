@@ -307,6 +307,62 @@ PrimitiveAction::~PrimitiveAction(){};
 /*****************************************************************************/
 /****** STATIC TASKS IMPLEMENTATION ******************************************/
 /*****************************************************************************/
+/*** Static root node ***/
+StaticRoot::StaticRoot(char id):
+    _gen(chrono::high_resolution_clock::now().time_since_epoch().count()),_prob(0, 100){
+    this->id = id; this->name = "StaticRoot"; this->isPrimitive = false; this->isStatic = true;
+    this->_lastAction = 0;
+};
+StaticRoot::~StaticRoot(){};
+/* Implements the fixed strategy */
+shared_ptr<Task> StaticRoot::getActionSelection(DiscreteFeatures& fullFeatures, vector<shared_ptr<Task>>& allowedActions){
+    // Cycle through the child nodes, executing one each time step
+    // Leveraging the fact that the allowedActions will be in the same order each time,
+    // check if the last executed action can be found and execute the next one.
+    // Note: This behavior is independent of the fullFeature state discription.
+    shared_ptr<Task> nextAction = nullptr;
+    for(unsigned int tsk = 0; tsk < allowedActions.size(); tsk++){
+        if(allowedActions[tsk]->id == this->_lastAction){
+            if(allowedActions[tsk] == allowedActions.back()){
+                nextAction = allowedActions[0];
+            } else {
+                nextAction = allowedActions[tsk + 1];
+            }
+        }
+    }
+    // If the last executed action cannot be found, execute a random action of the allowed ones.
+    if(nextAction == nullptr) nextAction = allowedActions[this->_prob(this->_gen) % allowedActions.size()];
+
+    this->_lastAction = nextAction->id;
+    return nextAction;
+};
+/*** Static speed control ***/
+StaticSpeedControl::StaticSpeedControl(char id){
+    this->id = id; this->name = "StaticSpeedControl"; this->isPrimitive = false; this->isStatic = true;
+}
+StaticSpeedControl::~StaticSpeedControl(){};
+/* Implements the fixed strategy */
+shared_ptr<Task> StaticSpeedControl::getActionSelection(DiscreteFeatures& fullFeatures, vector<shared_ptr<Task>>& allowedActions){
+    // Accelerate until 30kmh and hold this speed constant.
+    shared_ptr<Task> nextAction = nullptr;
+    char actionId;
+    if((int)fullFeatures.speed < (int)DiscreteFeatures::speed_t::V4){
+        // Speed under 30kmh --> accelerate
+        actionId = 4;
+    } else {
+        actionId = 5;
+    }
+
+
+    for(unsigned int tsk = 0; tsk < allowedActions.size(); tsk++){
+        if(allowedActions[tsk]->id == actionId) nextAction = allowedActions[tsk];
+    }
+    // If the last executed action cannot be found, execute a random action of the allowed ones.
+    if(nextAction == nullptr) nextAction = allowedActions[0];
+
+    return nextAction;
+};
+
 /*** Static gear control ***/
 StaticGearControl::StaticGearControl(char id){
     this->id = id; this->name = "StaticGearControl"; this->isPrimitive = false; this->isStatic = true;
@@ -361,35 +417,5 @@ shared_ptr<Task> StaticGearControl::getActionSelection(DiscreteFeatures& fullFea
     for(unsigned int itm = 0; itm < allowedActions.size(); itm++){
         if(allowedActions[itm]->id == aID) nextAction = allowedActions[itm];
     }
-    return nextAction;
-};
-
-/*** Static root node ***/
-StaticRoot::StaticRoot(char id):
-    _gen(chrono::high_resolution_clock::now().time_since_epoch().count()),_prob(0, 100){
-    this->id = id; this->name = "StaticRoot"; this->isPrimitive = false; this->isStatic = true;
-    this->_lastAction = 0;
-};
-StaticRoot::~StaticRoot(){};
-/* Implements the fixed strategy */
-shared_ptr<Task> StaticRoot::getActionSelection(DiscreteFeatures& fullFeatures, vector<shared_ptr<Task>>& allowedActions){
-    // Cycle through the child nodes, executing one each time step
-    // Leveraging the fact that the allowedActions will be in the same order each time,
-    // check if the last executed action can be found and execute the next one.
-    // Note: This behavior is independent of the fullFeature state discription.
-    shared_ptr<Task> nextAction = nullptr;
-    for(unsigned int tsk = 0; tsk < allowedActions.size(); tsk++){
-        if(allowedActions[tsk]->id == this->_lastAction){
-            if(allowedActions[tsk] == allowedActions.back()){
-                nextAction = allowedActions[0];
-            } else {
-                nextAction = allowedActions[tsk + 1];
-            }
-        }
-    }
-    // If the last executed action cannot be found, execute a random action of the allowed ones.
-    if(nextAction == nullptr) nextAction = allowedActions[this->_prob(this->_gen) % (allowedActions.size() - 1)];
-
-    this->_lastAction = nextAction->id;
     return nextAction;
 };

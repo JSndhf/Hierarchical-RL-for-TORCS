@@ -4,7 +4,8 @@ HRLDriver::HRLDriver():
     _env(EnvControl(HRL_MAX_EPISODES)),_data(DataHandler()),_lastState(DiscreteFeatures()){
     // Create the problem specific task tree
     shared_ptr<Task> root = make_shared<StaticRoot>(0);
-    shared_ptr<Task> speedCtrl = make_shared<DynamicTask>(1, "speedCtrl", HRL_ALPHA_START, HRL_GAMMA, HRL_EPSILON, 3);
+    //shared_ptr<Task> speedCtrl = make_shared<DynamicTask>(1, "speedCtrl", HRL_ALPHA_START, HRL_GAMMA, HRL_EPSILON, 3);
+    shared_ptr<Task> speedCtrl = make_shared<StaticSpeedControl>(1);
     shared_ptr<Task> accel = make_shared<PrimitiveAction>(4, "accelerate");
     shared_ptr<Task> idle = make_shared<PrimitiveAction>(5, "idle");
     shared_ptr<Task> breakk = make_shared<PrimitiveAction>(6, "break");

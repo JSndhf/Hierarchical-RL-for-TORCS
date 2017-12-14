@@ -22,7 +22,7 @@
 #define HRL_ALPHA_START             0.8
 #define HRL_EPSILON                 0.2
 #define HRL_GAMMA                   0.99
-#define HRL_MAX_EPISODES            1000
+#define HRL_MAX_EPISODES            10000
 #define HRL_ALPHA_DECAY             ((0.8-0.1)/HRL_MAX_EPISODES)
 #define HRL_EPSILON_DECAY           ((0.2-0.05)/HRL_MAX_EPISODES)
 

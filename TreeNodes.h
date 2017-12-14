@@ -103,7 +103,7 @@ class DynamicTask:public Task {
 class PrimitiveAction: public Task {
   public:
     /* Constructor */
-    PrimitiveAction(char id, string name);
+    PrimitiveAction(char, string);
     /* Destructor */
     virtual ~PrimitiveAction();
 
@@ -114,15 +114,6 @@ class PrimitiveAction: public Task {
 /* These tasks do not learn and pick subtasks/primitive actions attached to  */
 /* them with a fixed strategy.                                               */
 /*****************************************************************************/
-/*** Static gear control ***/
-class StaticGearControl: public Task {
-  public:
-    /* Constructor */
-    StaticGearControl(char id);
-    /* Destructor */
-    virtual ~StaticGearControl();
-    virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&);
-};
 /*** Static root node ***/
 class StaticRoot: public Task {
     char _lastAction;
@@ -133,6 +124,24 @@ class StaticRoot: public Task {
     StaticRoot(char);
     /* Destructor */
     virtual ~StaticRoot();
+    virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&);
+};
+/*** Static speed control (25kmh) ***/
+class StaticSpeedControl: public Task {
+  public:
+    /* Constructor */
+    StaticSpeedControl(char);
+    /* Destructor */
+    virtual ~StaticSpeedControl();
+    virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&);
+};
+/*** Static gear control ***/
+class StaticGearControl: public Task {
+  public:
+    /* Constructor */
+    StaticGearControl(char);
+    /* Destructor */
+    virtual ~StaticGearControl();
     virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&);
 };
 
