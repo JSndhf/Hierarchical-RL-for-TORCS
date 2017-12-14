@@ -34,6 +34,7 @@ class DataHandler {
     ~DataHandler();
     bool storeExperience(shared_ptr<Task>);
     bool loadExperience(string, shared_ptr<Task>);
+    void updateParams(shared_ptr<Task>);
 
     void updateStats(double);
     void writeStats();

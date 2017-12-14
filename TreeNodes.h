@@ -93,6 +93,8 @@ class DynamicTask:public Task {
     virtual double getExternalMaxCValue(DiscreteFeatures&);
     /* Strategy -- MAXNode behavior */
     virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&);
+    // Specific methods --> dynamic_pointer_cast needed to shared_ptr<DynamicTask>
+    void updateParams();
 };
 
 /*****************************************************************************/

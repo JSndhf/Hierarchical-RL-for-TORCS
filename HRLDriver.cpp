@@ -81,7 +81,7 @@ CarControl HRLDriver::wDrive(CarState cs){
 
         // Get the overall reward
         double rt = this->_env.getAbstractReward(cs);
-        
+
         /********* BACKWARDS LEARNING *********************************************/
         /**************************************************************************/
         // For each dynamic task in the stack of actions of the last state
@@ -125,6 +125,9 @@ CarControl HRLDriver::wDrive(CarState cs){
         this->_data.updateStats(rt);
         // If the reset is called, do some backup
         if(primActions.getMeta()){
+            // Update the dynamic task's parameters
+            this->_data.updateParams(this->_rootTask);
+            // Count up the episodes
             this->_episodeCnt++;
             // Store the experience once every 500 episodes
             if((this->_episodeCnt % HRL_BACKUP_EPISODE_CNT) == 0) this->_data.storeExperience(this->_rootTask);

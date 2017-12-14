@@ -3,7 +3,7 @@
 DataHandler::DataHandler():_episodeCnt(0),_episodeActionCnt(0),_episodeReward(0.0){};
 DataHandler::~DataHandler(){};
 
-/*** getDynamicTasks *************************************************
+/*** getDynamicTasks ************************************************
     Loops through the given taskTree, returning those children who
     themself are dynamic tasks. This is meant to be used recursively
     to create a flat vector of pointers of all dynamic tasks in a whole
@@ -147,6 +147,13 @@ bool DataHandler::loadExperience(string srcPath, shared_ptr<Task> taskTree){
 
 }
 
+/***** Gets all dynamic tasks in a task tree and calls their updateParams method ***/
+void DataHandler::updateParams(shared_ptr<Task> rootTask){
+    vector<shared_ptr<DynamicTask>> dynTasks = this->_getDynamicTasks(rootTask);
+    for(auto const &task : dynTasks)
+        task->updateParams();
+}
+
 void DataHandler::updateStats(double addReward){
     this->_episodeActionCnt++;
     this->_episodeReward += addReward;
@@ -154,7 +161,7 @@ void DataHandler::updateStats(double addReward){
 
 void DataHandler::writeStats(){
     ofstream statFile;
-    statFile.open("data/stats.txt", ios::app);
+    statFile.open("data/stats.csv", ios::app);
     statFile << this->_episodeCnt << "; " << this->_episodeActionCnt << "; " << this->_episodeReward << ";\n";
     statFile.close();
     this->_episodeActionCnt = 0;

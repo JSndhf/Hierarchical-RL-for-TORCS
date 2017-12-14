@@ -288,6 +288,13 @@ shared_ptr<Task> DynamicTask::getActionSelection(DiscreteFeatures& fullFeatures,
 
     return aPi;
 };
+/*** uodateParams **************************************************
+    Implements the decay of alpha/epsilon over the whole experiment
+********************************************************************/
+void DynamicTask::updateParams(){
+    this->_alpha -= HRL_ALPHA_DECAY;
+    this->_epsilon -= HRL_EPSILON_DECAY;
+}
 
 /*****************************************************************************/
 /****** PRIMITIVE ACTION IMPLEMENTATION **************************************/
