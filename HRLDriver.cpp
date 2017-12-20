@@ -43,19 +43,18 @@ HRLDriver::HRLDriver():
 HRLDriver::~HRLDriver(){};
 
 void HRLDriver::init(float *angles, unsigned int mode, string expFilePath){
-    // Use the standard angle splitting as in SimpleDriver although not all of
-    // the values might be used.
+    // Adjust the standard angle splitting from SimpleDriver:
+    // Set angles as {-60,-50,-40,-30,-20,-15,-10,-6,-3,0,3,6,10,15,20,30,40,50,60}
+    for(int i = 0; i < 4; i++){
+        angles[i] = -60 + i * 10;
+        angles[18 - i] = 60 - i * 10;
+    }
+    for(int i = 4; i < 7; i++){
+      	angles[i] = -20 + (i - 4) * 5;
+      	angles[18 - i] = 20 - (i - 4) * 5;
+    }
+    for(int i = 7; i < 12; i++) angles[i] = -6 + (i - 7) * 3;
 
-    // Set angles as {-90,-75,-60,-45,-30,-20,-15,-10,-5,0,5,10,15,20,30,45,60,75,90}
-    for(int i = 0; i < 5; i++){
-        angles[i] = -90 + i * 15;
-        angles[18 - i] = 90 - i * 15;
-    }
-    for(int i = 5; i < 9; i++){
-      	angles[i] = -20 + (i - 5) * 5;
-      	angles[18 - i] = 20 - (i - 5) * 5;
-    }
-    angles[9] = 0;
     // Set the mode
     this->_isLearning = (bool) mode;
     this->_episodeCnt = 0;

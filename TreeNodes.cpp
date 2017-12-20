@@ -346,7 +346,7 @@ shared_ptr<Task> StaticSpeedControl::getActionSelection(DiscreteFeatures& fullFe
     // Accelerate until 30kmh and hold this speed constant.
     shared_ptr<Task> nextAction = nullptr;
     char actionId;
-    if((int)fullFeatures.speed < (int)DiscreteFeatures::speed_t::V4){
+    if((int)fullFeatures.speed < (int)DiscreteFeatures::speed_t::V6){
         // Speed under 30kmh --> accelerate
         actionId = 4;
     } else {

@@ -61,28 +61,29 @@ DiscreteFeatures EnvControl::getFeatures(CarState& cs){
     /***** Curvature *********************************************************/
     // For now, a weighted average over the angles and distanes is used to
     // calculate the curvature which is discretized afterwards.
-    double sensorAngles[] = {-60,-45,-30,-20,-15,-10,-5,0,5,10,15,20,30,45,60};
+    double sensorAngles[] = {-60,-50,-40,-30,-20,-15,-10,-6,-3,0,3,6,10,15,20,30,40,50,60};
     double res = 0;
     double angleDistanceSum = 0;
     double distanceSum = 0;
-    for(int sens = 2; sens < 17; sens++){
+    for(int sens = 0; sens < 19; sens++){
         res = cs.getTrack(sens);
-        angleDistanceSum += res * sensorAngles[sens-2];
+        angleDistanceSum += res * sensorAngles[sens];
         distanceSum += res;
     }
     res = angleDistanceSum / distanceSum;
     // Discretization table:
-    // curvature | <(-60) | (-60)-(-45) | (-45)-(-30) | (-30)-(-22.5) | (-22.5)-(-15) | (-15)-(-7.5) | (-7.5)-7.5 | 7.5-15 | 15-22.5 | 22.5-30 | 30-45 | 45-60 | >60
-    // state     | CL6    | CL5         | CL4         | CL3           | CL2           | CL1          | C0         | CR1    | CR2     | CR3     | CR4   | CR5   | CR6
-    dPhi.curvature = (DiscreteFeatures::curvature_t) ( (res > -60.0) + (res > -45.0)
-                        + (res > -30.0) + (res > -22.5) + (res > -15.0) + (res > -7.5)
-                        + (res > 7.5) + (res > 15.0) + (res > 22.5) + (res > 30.0)
-                        + (res > 45.0) + (res > 60.0));
+    // curvature | (-60)-(-45) | (-45)-(-30) | (-30)-(-22.5) | (-22.5)-(-15) | (-15)-(-10) | (-10)-(-6) | (-6)-(-3) | (-3)-3 | 3-6 | 6-10 | 10-15 | 15-22.5 | 22.5-30 | 30-45 | 45-60 |
+    // state     | CL7         | CL6         | CL5           | CL4           | CL3         | CL2        | CL1       | C0     | CR1 | CR2  | CR3   | CR4     | CR5     | CR6   | CR7   |
+    dPhi.curvature = (DiscreteFeatures::curvature_t) ( (res > -45.0) + (res > -30.0)
+                        + (res > -22.5) + (res > -15.0) + (res > -10.0) + (res > -6)
+                        + (res > -3.0) + (res > 3.0) + (res > 6.0) + (res > 10.0)
+                        + (res > 15.0) + (res > 22.5) + (res > 30.0) + (res > 45.0) );
     #ifdef HRL_DEBUG
+        cout << "Curvature: " << res << endl;
         cout << "|";
         cout << setfill(' ') << setw((int)dPhi.curvature) << " ";
         cout << "o";
-        cout << setfill(' ') << setw(10 - (int)dPhi.curvature) << " ";
+        cout << setfill(' ') << setw(14 - (int)dPhi.curvature) << " ";
         cout << "|" << endl;
     #endif
     /***** TrackPos **********************************************************/
