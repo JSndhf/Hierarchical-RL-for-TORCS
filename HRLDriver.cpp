@@ -84,13 +84,15 @@ CarControl HRLDriver::wDrive(CarState cs){
 
         /********* BACKWARDS LEARNING *********************************************/
         /**************************************************************************/
-        // For each dynamic task in the stack of actions of the last state
-        for(shared_ptr<Task> task : this->_lastActionsStack){
-            if(!task->isPrimitive && !task->isStatic){
-                // Get the currently allowed actions for the specific task
-                vector<shared_ptr<Task>> allowedActions = this->_env.getAllowedActions(task, fullFeatures);
-                // Call the learning method
-                task->learn(fullFeatures, allowedActions, rt);
+        if(this->_isLearning){
+            // For each dynamic task in the stack of actions of the last state
+            for(shared_ptr<Task> task : this->_lastActionsStack){
+                if(!task->isPrimitive && !task->isStatic){
+                    // Get the currently allowed actions for the specific task
+                    vector<shared_ptr<Task>> allowedActions = this->_env.getAllowedActions(task, fullFeatures);
+                    // Call the learning method
+                    task->learn(fullFeatures, allowedActions, rt);
+                }
             }
         }
 
@@ -107,7 +109,7 @@ CarControl HRLDriver::wDrive(CarState cs){
             // Get the allowed actions for the current task regarding the feature set
             allowedActions = this->_env.getAllowedActions(actionOnPath, fullFeatures);
             // Determine the current nodes best and stategic actions (the latter accounts for exploration)
-            actionOnPath = actionOnPath->getActionSelection(fullFeatures, allowedActions);
+            actionOnPath = actionOnPath->getActionSelection(fullFeatures, allowedActions, !this->_isLearning);
             // Push it to the stack
             currActionStack.push_back(actionOnPath);
             // Do as long as action is not primitive.

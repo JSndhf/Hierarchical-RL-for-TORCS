@@ -49,7 +49,7 @@ class Task {
     virtual void learn(DiscreteFeatures&, vector<shared_ptr<Task>>&, double);
     virtual double getExternalMaxCValue(DiscreteFeatures&);
     /* Strategy -- MAXNode behavior */
-    virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&);
+    virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&, bool);
     /* Printing for debugging */
     virtual string toString(int);
 };
@@ -92,7 +92,7 @@ class DynamicTask:public Task {
     virtual void learn(DiscreteFeatures&, vector<shared_ptr<Task>>&, double);
     virtual double getExternalMaxCValue(DiscreteFeatures&);
     /* Strategy -- MAXNode behavior */
-    virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&);
+    virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&, bool);
     // Specific methods --> dynamic_pointer_cast needed to shared_ptr<DynamicTask>
     void updateParams();
 };
@@ -124,7 +124,7 @@ class StaticRoot: public Task {
     StaticRoot(char);
     /* Destructor */
     virtual ~StaticRoot();
-    virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&);
+    virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&, bool);
 };
 /*** Static speed control (25kmh) ***/
 class StaticSpeedControl: public Task {
@@ -133,7 +133,7 @@ class StaticSpeedControl: public Task {
     StaticSpeedControl(char);
     /* Destructor */
     virtual ~StaticSpeedControl();
-    virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&);
+    virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&, bool);
 };
 /*** Static gear control ***/
 class StaticGearControl: public Task {
@@ -142,7 +142,7 @@ class StaticGearControl: public Task {
     StaticGearControl(char);
     /* Destructor */
     virtual ~StaticGearControl();
-    virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&);
+    virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&, bool);
 };
 
 #endif /*TREENODES_H_*/

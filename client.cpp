@@ -139,6 +139,11 @@ int main(int argc, char *argv[]){
 		}
 		/************** ONLY FOR LEARNING MODE **********************************************/
 		if(mode){
+				/************** Make sure, all torcs instances currently running are closed *********/
+				stringstream ssCmd;
+				// First force a server shutdown for the current server
+				ssCmd << "pkill torcs";
+				system(ssCmd.str().c_str());
 				/************** Create as much instances of the torcs game as needed ****************/
 				for(int server = HRL_DEFAULT_SERVERPORT; server <= HRL_MAX_SERVERPORT; server++){
 						// Build system call for the torcs server

@@ -39,7 +39,7 @@ string Task::getTaskFeatureString(DiscreteFeatures& fullFeatures){
 // like the PrimitiveAction do not need an own implementation.
 void Task::learn(DiscreteFeatures& currentFullFeatures, vector<shared_ptr<Task>>& allowedActions, double reward){ return; };
 double Task::getExternalMaxCValue(DiscreteFeatures& fullFeatures){ return 0.0; };
-shared_ptr<Task> Task::getActionSelection(DiscreteFeatures& fullFeatures, vector<shared_ptr<Task>>& allowedActions){
+shared_ptr<Task> Task::getActionSelection(DiscreteFeatures& fullFeatures, vector<shared_ptr<Task>>& allowedActions, bool exploitOnly){
   return nullptr;
 };
 // Basic stringify method
@@ -247,7 +247,7 @@ double DynamicTask::getExternalMaxCValue(DiscreteFeatures& fullFeatures){
     Implements the strategy to select actions either by finding the
     best state-action-value or deploying exploration
 ********************************************************************/
-shared_ptr<Task> DynamicTask::getActionSelection(DiscreteFeatures& fullFeatures, vector<shared_ptr<Task>>& allowedActions){
+shared_ptr<Task> DynamicTask::getActionSelection(DiscreteFeatures& fullFeatures, vector<shared_ptr<Task>>& allowedActions, bool exploitOnly){
     shared_ptr<Task> aStar = nullptr;
     shared_ptr<Task> aPi = nullptr;
     char actionId = 0;
@@ -273,13 +273,17 @@ shared_ptr<Task> DynamicTask::getActionSelection(DiscreteFeatures& fullFeatures,
     /****** Exploitation vs. exploration decision ****************************/
     // **** Current version uses epsilon-greedy exploration. ****
     //    The best action should be selected with a propability of 1-epsilon
-    if(this->_prob(this->_gen) > this->_epsilon){
+    if(exploitOnly){
         aPi = aStar;
     } else {
-        // Get a random action NOT including the best action
-        do {
-            aPi = allowedActions[(int)(this->_prob(this->_gen) * 100 ) % (int)allowedActions.size()];
-        } while(aPi->id == aStar->id);
+        if(this->_prob(this->_gen) > this->_epsilon){
+            aPi = aStar;
+        } else {
+            // Get a random action NOT including the best action
+            do {
+                aPi = allowedActions[(int)(this->_prob(this->_gen) * 100 ) % (int)allowedActions.size()];
+            } while(aPi->id == aStar->id);
+        }
     }
     // Store the feature-action pair for usage in next learning cycle
     stringstream aPiId;
@@ -315,7 +319,7 @@ StaticRoot::StaticRoot(char id):
 };
 StaticRoot::~StaticRoot(){};
 /* Implements the fixed strategy */
-shared_ptr<Task> StaticRoot::getActionSelection(DiscreteFeatures& fullFeatures, vector<shared_ptr<Task>>& allowedActions){
+shared_ptr<Task> StaticRoot::getActionSelection(DiscreteFeatures& fullFeatures, vector<shared_ptr<Task>>& allowedActions, bool exploitOnly){
     // Cycle through the child nodes, executing one each time step
     // Leveraging the fact that the allowedActions will be in the same order each time,
     // check if the last executed action can be found and execute the next one.
@@ -342,7 +346,7 @@ StaticSpeedControl::StaticSpeedControl(char id){
 }
 StaticSpeedControl::~StaticSpeedControl(){};
 /* Implements the fixed strategy */
-shared_ptr<Task> StaticSpeedControl::getActionSelection(DiscreteFeatures& fullFeatures, vector<shared_ptr<Task>>& allowedActions){
+shared_ptr<Task> StaticSpeedControl::getActionSelection(DiscreteFeatures& fullFeatures, vector<shared_ptr<Task>>& allowedActions, bool exploitOnly){
     // Accelerate until 30kmh and hold this speed constant.
     shared_ptr<Task> nextAction = nullptr;
     char actionId;
@@ -369,7 +373,7 @@ StaticGearControl::StaticGearControl(char id){
 };
 StaticGearControl::~StaticGearControl(){};
 /* Implements the fixed strategy */
-shared_ptr<Task> StaticGearControl::getActionSelection(DiscreteFeatures& fullFeatures, vector<shared_ptr<Task>>& allowedActions){
+shared_ptr<Task> StaticGearControl::getActionSelection(DiscreteFeatures& fullFeatures, vector<shared_ptr<Task>>& allowedActions, bool exploitOnly){
     // This implements the static gear shifting strategy as [Karavolos 2013] proposes it.
     // Expected feature value vector contains:
     //    One byte (2 hex digits) per:  rpm (DiscreteFeatures::rpm_t) gear (DiscreteFeatures::gear)
