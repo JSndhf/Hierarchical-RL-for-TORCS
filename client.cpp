@@ -133,6 +133,11 @@ int main(int argc, char *argv[]){
 		/**** Initialization routine of driver agent ***/														// <----
 		float angles[19];
 		d.init(angles, mode, expFilePath);
+		/**** If the learning should start from scratch, delete the data files ****/
+		if(strlen(expFilePath) == 0){
+				system("rm data/*");
+				cout << endl << "*** Starting from scratch - old files deleted. ***" << endl;
+		}
 		if(mode){
 				cout << endl << "********** Begin driving **********" << endl;
 		} else {
@@ -141,20 +146,18 @@ int main(int argc, char *argv[]){
 		/************** ONLY FOR LEARNING MODE **********************************************/
 		if(mode){
 				/************** Make sure, all torcs instances currently running are closed *********/
-				stringstream ssCmd;
-				// First force a server shutdown for the current server
-				ssCmd << "pkill torcs";
-				system(ssCmd.str().c_str());
+				/* This may be neccessary due to an erroneous last run. */
+				system("pkill torcs");
 				/************** Create as much instances of the torcs game as needed ****************/
 				for(int server = HRL_DEFAULT_SERVERPORT; server <= HRL_MAX_SERVERPORT; server++){
 						// Build system call for the torcs server
-						stringstream ss;
-						ss << "torcs -nofuel -nodamage -nolaptime -t 1000000  -r " << HRL_RACECONFIG_BASE << "-" << server << ".xml ";
+						stringstream servInitCmd;
+						servInitCmd << "torcs -nofuel -nodamage -nolaptime -t 1000000  -r " << HRL_RACECONFIG_BASE << "-" << server << ".xml ";
 						#ifndef __COMMUNICATION_VERBOSE__
-								ss << ">/dev/null 2>&1 ";		// Surpress output from torcs
+								servInitCmd << ">/dev/null 2>&1 ";		// Surpress output from torcs
 						#endif
-						ss << "&";	// Immediate return
-						system(ss.str().c_str());
+						servInitCmd << "&";	// Immediate return
+						system(servInitCmd.str().c_str());
 				}
 				// Give the servers a little head start for this first startup
 				usleep(2000000);
@@ -249,21 +252,21 @@ int main(int argc, char *argv[]){
 								/* A restart is requested from the agent, so restart the current server
 									 and switch to the next available one. */
 								if(mode && (action.find("(meta 1)") != string::npos)){
-										stringstream ss1;
+										stringstream killCmd;
 										// First force a server shutdown for the current server
-										ss1 << "lsof -i udp:" << serverPort << " | awk 'NR!=1 {print $2}' | xargs kill";
+										killCmd << "lsof -i udp:" << serverPort << " | awk 'NR!=1 {print $2}' | xargs kill";
 										#ifndef __COMMUNICATION_VERBOSE__
-												ss1 << ">/dev/null 2>&1 ";		// Surpress output from torcs
+												killCmd << ">/dev/null 2>&1 ";		// Surpress output from torcs
 										#endif
-										system(ss1.str().c_str());
+										system(killCmd.str().c_str());
 										// Now open it up again...
-										stringstream ss2;
-										ss2 << "torcs -nofuel -nodamage -nolaptime -t 1000000 -r " << HRL_RACECONFIG_BASE << "-" << serverPort << ".xml ";
+										stringstream reviveCmd;
+										reviveCmd << "torcs -nofuel -nodamage -nolaptime -t 1000000 -r " << HRL_RACECONFIG_BASE << "-" << serverPort << ".xml ";
 										#ifndef __COMMUNICATION_VERBOSE__
-												ss2 << ">/dev/null 2>&1 ";		// Surpress output from torcs
+												reviveCmd << ">/dev/null 2>&1 ";		// Surpress output from torcs
 										#endif
-										ss2 << "&";	// Immediate return
-										system(ss2.str().c_str());
+										reviveCmd << "&";	// Immediate return
+										system(reviveCmd.str().c_str());
 										// ... and don't wait for it but go to the next server
 										serverPort++;
 										d.onRestart();

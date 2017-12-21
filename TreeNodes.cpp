@@ -74,8 +74,31 @@ DynamicTask::DynamicTask(char id, string name, double alphaStart, double gamma, 
 
 DynamicTask::~DynamicTask(){};
 
-double DynamicTask::_getPseudoReward(string featureValues){
-    return 0.0; // No pseudo-reward atm
+double DynamicTask::_getPseudoReward(DiscreteFeatures& fullFeatures){
+    #ifdef HRL_PR_ENABLED
+        double reward = 0.0;
+        switch (this->id) {
+          // speedCtrl
+          case 1:
+              /* Extra punish driving too slow (<50kmh => <V6) */
+              if(fullFeatures.speed < DiscreteFeatures::speed_t::V6) reward = HRL_PR_SPEED_SLOW;
+              /* Reward driving fast (>120kmh => >V8) */
+              else if(fullFeatures.speed > DiscreteFeatures::speed_t::V8) reward = HRL_PR_SPEED_FAST;
+          // steeringCtrl
+          case 3:
+            /* Force avoiding the sides of the track */
+            if(fullFeatures.trackPos == DiscreteFeatures::trackPos_t::PL4 ||
+               fullFeatures.trackPos == DiscreteFeatures::trackPos_t::PR4)
+                reward = HRL_PR_STEER_NEAROUT;
+            /* Extra punish driving out of the track */
+            else if(fullFeatures.trackPos == DiscreteFeatures::trackPos_t::PL5 ||
+                    fullFeatures.trackPos == DiscreteFeatures::trackPos_t::PR5)
+                reward = HRL_PR_STEER_OUT;
+        }
+        return reward;
+    #else
+        return 0.0; // No pseudo-rewards
+    #endif
 };
 
 /*** _getInternalMaxCValue ******************************************
@@ -175,8 +198,8 @@ void DynamicTask::learn(DiscreteFeatures& currentFullFeatures, vector<shared_ptr
     /*************************************************************************/
     /*** Learning the INTERNAL completion function ***/
     double Ctilde_sLast_aPiLast = this->_getInternalCValue(this->_lastFeatureAPiPair);
-    // Get the internal (pseudo-)reward for the last state-action pair
-    double Rtilde_sNow = this->_getPseudoReward(currentFeatures);
+    // Get the internal (pseudo-)reward for the current feature vector
+    double Rtilde_sNow = this->_getPseudoReward(currentFullFeatures);
     double Ctilde_sNow_aStar = maxIntCActionValue.second;
     double V_aStar_sNow;
 

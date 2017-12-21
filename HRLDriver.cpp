@@ -3,9 +3,16 @@
 HRLDriver::HRLDriver():
     _env(EnvControl(HRL_MAX_EPISODES)),_data(DataHandler()),_lastState(DiscreteFeatures()){
     // Create the problem specific task tree
-    shared_ptr<Task> root = make_shared<StaticRoot>(0);
-    //shared_ptr<Task> speedCtrl = make_shared<DynamicTask>(1, "speedCtrl", HRL_ALPHA_START, HRL_GAMMA, HRL_EPSILON, 3);
-    shared_ptr<Task> speedCtrl = make_shared<StaticSpeedControl>(1);
+    #ifdef HRL_STATIC_ROOT
+        shared_ptr<Task> root = make_shared<StaticRoot>(0);
+    #else
+        shared_ptr<Task> root = make_shared<DynamicTask>(0, "root", HRL_ALPHA_START, HRL_GAMMA, HRL_EPSILON, 3);
+    #endif
+    #ifdef HRL_STATIC_SPEED
+        shared_ptr<Task> speedCtrl = make_shared<StaticSpeedControl>(1);
+    #else
+        shared_ptr<Task> speedCtrl = make_shared<DynamicTask>(1, "speedCtrl", HRL_ALPHA_START, HRL_GAMMA, HRL_EPSILON, 3);
+    #endif
     shared_ptr<Task> accel = make_shared<PrimitiveAction>(4, "accelerate");
     shared_ptr<Task> idle = make_shared<PrimitiveAction>(5, "idle");
     shared_ptr<Task> breakk = make_shared<PrimitiveAction>(6, "break");
@@ -13,7 +20,11 @@ HRLDriver::HRLDriver():
     speedCtrl->children.push_back(idle);
     speedCtrl->children.push_back(breakk);
     root->children.push_back(speedCtrl);
-    shared_ptr<Task> gearCtrl = make_shared<StaticGearControl>(2);
+    #ifdef HRL_STATIC_GEAR
+        shared_ptr<Task> gearCtrl = make_shared<StaticGearControl>(2);
+    #else
+        shared_ptr<Task> gearCtrl = make_shared<DynamicTask>(2, "gearCtrl", HRL_ALPHA_START, HRL_GAMMA, HRL_EPSILON, 3);
+    #endif
     shared_ptr<Task> upshift = make_shared<PrimitiveAction>(7, "shift up");
     shared_ptr<Task> neutral = make_shared<PrimitiveAction>(8, "neural");
     shared_ptr<Task> downshift = make_shared<PrimitiveAction>(9, "shift down");
@@ -136,8 +147,8 @@ CarControl HRLDriver::wDrive(CarState cs){
             // Write out stats
             this->_data.writeStats();
             // Output to visualize episodes
-            cout << "." << flush;
-            if((this->_episodeCnt % 100) == 0) cout << "[" << this->_episodeCnt << "]";
+            if((this->_episodeCnt % HRL_EPISODE_MARKER) == 0) cout << "." << flush;
+            if((this->_episodeCnt % HRL_EPISODE_COUNTER) == 0) cout << "[" << this->_episodeCnt << "]" << flush;
             // Reset the environment for the next episode
             this->_env.resetStatus();
         }

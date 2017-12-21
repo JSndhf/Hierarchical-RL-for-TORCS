@@ -71,7 +71,7 @@ class DynamicTask:public Task {
     mt19937 _gen;
     uniform_real_distribution<double> _prob;
     // Private methods
-    double _getPseudoReward(string);
+    double _getPseudoReward(DiscreteFeatures&);
     /* Returns the best action and its value in the given state regarding
        the INTERNAL completion function (including pseudo-rewards) */
     pair<shared_ptr<Task>, double> _getInternalMaxCValue(string, vector<shared_ptr<Task>>&);
