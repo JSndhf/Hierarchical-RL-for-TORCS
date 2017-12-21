@@ -18,6 +18,7 @@
 #include "hrl_config.h"
 /******************************/
 #include <iostream>
+#include <iomanip>
 #include <cstdlib>
 #include <cstdio>
 #include <string>
@@ -298,7 +299,11 @@ int main(int argc, char *argv[]){
 		auto experimentEnd = std::chrono::system_clock::now();
 		auto experimentDur = std::chrono::duration_cast<std::chrono::duration<float>>(experimentEnd - experimentStart);
 		cout << endl << "********** End of run *************" << endl;
-		cout << "*** Total time: " << experimentDur.count() << " sec. ***" << endl;
+		double secs = experimentDur.count();
+		short hh = (short)(secs/3600.0);
+		short mm = (short)((secs-hh*3600.0)/60.0);
+ 		secs = secs - hh*3600.0 - mm*60.0;
+		cout << "*** Total time: " << hh << "h " << mm << "m " << setprecision(2) << secs << " sec. ***" << endl;
 		cout << "***********************************" << endl << endl;
 		// Clean up before leaving
     d.onShutdown();

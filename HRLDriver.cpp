@@ -137,7 +137,7 @@ CarControl HRLDriver::wDrive(CarState cs){
             this->_data.writeStats();
             // Output to visualize episodes
             cout << "." << flush;
-            if((this->_episodeCnt % 50) == 0) cout << "[" << this->_episodeCnt << "]";
+            if((this->_episodeCnt % 100) == 0) cout << "[" << this->_episodeCnt << "]";
             // Reset the environment for the next episode
             this->_env.resetStatus();
         }

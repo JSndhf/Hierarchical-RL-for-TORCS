@@ -57,7 +57,7 @@ DiscreteFeatures EnvControl::getFeatures(CarState& cs){
     dPhi.speed = (DiscreteFeatures::speed_t) ( (speed > 0) + (speed > 10) + (speed > 20)
                     + (speed > 30) + (speed > 40) + (speed > 50) + (speed > 75) + (speed > 100)
                     + (speed > 125) + (speed > 150) + (speed > 175) + (speed > 200)
-                    + (speed > 240) + (speed > 80));
+                    + (speed > 240) + (speed > 280));
     /***** Curvature *********************************************************/
     // For now, a weighted average over the angles and distanes is used to
     // calculate the curvature which is discretized afterwards.

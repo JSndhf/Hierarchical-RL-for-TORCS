@@ -20,15 +20,15 @@
 
 /***** Experiment setup ****/
 #define HRL_ALPHA_START             0.8
-#define HRL_EPSILON                 0.2
+#define HRL_EPSILON                 0.1
 #define HRL_GAMMA                   0.99
 #define HRL_MAX_EPISODES            10000
-#define HRL_ALPHA_DECAY             ((0.8-0.1)/HRL_MAX_EPISODES)
-#define HRL_EPSILON_DECAY           ((0.2-0.05)/HRL_MAX_EPISODES)
+#define HRL_ALPHA_DECAY             (0.7 / HRL_MAX_EPISODES)      /*((HRL_ALPHA_START-HRL_ALPHA_END)/HRL_MAX_EPISODES) */
+#define HRL_EPSILON_DECAY           (0.09 / HRL_MAX_EPISODES)     /* ((HRL_EPSILON-HRL_EPSILON_END)/HRL_MAX_EPISODES) */
 
 /***** Rewarding ****/
 #define HRL_DSFACTOR                1
-#define HRL_TERMINATE_NEGREWARD     -3.0
+#define HRL_TERMINATE_NEGREWARD     -10.0
 
 
 /***** Data handling ****/
