@@ -19,23 +19,21 @@
 #define HRL_TRACKLEAVE_LEFT         1.2
 
 /***** Experiment setup ****/
-#define HRL_ALPHA_START             0.8
-#define HRL_EPSILON                 0.1
+#define HRL_ALPHA_START             __HRL_ALPHA__
+#define HRL_EPSILON                 __HRL_EPSILON__
 #define HRL_GAMMA                   0.99
-#define HRL_MAX_EPISODES            10000
-#define HRL_ALPHA_DECAY             (0.7 / HRL_MAX_EPISODES)      /*((HRL_ALPHA_START-HRL_ALPHA_END)/HRL_MAX_EPISODES) */
-#define HRL_EPSILON_DECAY           (0.09 / HRL_MAX_EPISODES)     /* ((HRL_EPSILON-HRL_EPSILON_END)/HRL_MAX_EPISODES) */
+#define HRL_MAX_EPISODES            __HRL_EPISODES__
+#define HRL_ALPHA_DECAY             __HRL_ALPHA_DECAY__      /*((HRL_ALPHA_START-HRL_ALPHA_END)/HRL_MAX_EPISODES) */
+#define HRL_EPSILON_DECAY           __HRL_EPSILON_DECAY__     /* ((HRL_EPSILON-HRL_EPSILON_END)/HRL_MAX_EPISODES) */
 
 /***** Task config ****/
-#define HRL_STATIC_ROOT
-#define HRL_STATIC_GEAR
-#define HRL_STATIC_SPEED
+/* Done in Makefile */
 
 /***** Rewarding ****/
 #define HRL_DSFACTOR                1
-#define HRL_TERMINATE_NEGREWARD     -10.0
+#define HRL_TERMINATE_NEGREWARD     __HRL_ABSTRACT_REWARD__
 /* Pseudo-rewards */
-//#define HRL_PR_ENABLED
+//If __HRL_PR_ENABLED__ gets defined by makefile
 #define HRL_PR_STEER_NEAROUT        -10.0
 #define HRL_PR_STEER_OUT            -100.0
 #define HRL_PR_SPEED_SLOW           -10.0

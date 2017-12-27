@@ -46,8 +46,10 @@ HRLDriver::HRLDriver():
     root->children.push_back(steeringCtrl);
     // Attach the task tree to the driver object
     this->_rootTask = root;
-    cout << endl << "*** Task configuration: ***" << endl << endl;;
-    cout << this->_rootTask->toString(0);
+    #ifdef HRL_DEBUG
+        cout << endl << "*** Task configuration: ***" << endl << endl;;
+        cout << this->_rootTask->toString(0);
+    #endif
     this->_episodeCnt = 0;
 };
 
@@ -70,11 +72,18 @@ void HRLDriver::init(float *angles, unsigned int mode, string expFilePath){
     this->_isLearning = (bool) mode;
     this->_episodeCnt = 0;
     // Check whether the dynamic tasks should be fed with stored experience
-    if(expFilePath.size() != 0){
+    if(strlen(expFilePath.c_str()) != 0){
+        #ifdef HRL_DEBUG
+            cout << "Including stored experience..." << endl;
+        #endif
         // Check if the file can be found
         if(access( expFilePath.c_str(), F_OK ) != -1){
             // Load the experience
             this->_data.loadExperience(expFilePath, this->_rootTask);
+        } else {
+            #ifdef HRL_DEBUG
+                cout << "Error: Cannot access the experience file. " << endl;
+            #endif
         }
     }
 };
@@ -136,22 +145,6 @@ CarControl HRLDriver::wDrive(CarState cs){
         primActions = this->_env.getActions(actionOnPath);
         // Update the statistics
         this->_data.updateStats(rt);
-        // If the reset is called, do some backup
-        if(primActions.getMeta()){
-            // Update the dynamic task's parameters
-            this->_data.updateParams(this->_rootTask);
-            // Count up the episodes
-            this->_episodeCnt++;
-            // Store the experience once every 500 episodes
-            if((this->_episodeCnt % HRL_BACKUP_EPISODE_CNT) == 0) this->_data.storeExperience(this->_rootTask);
-            // Write out stats
-            this->_data.writeStats();
-            // Output to visualize episodes
-            if((this->_episodeCnt % HRL_EPISODE_MARKER) == 0) cout << "." << flush;
-            if((this->_episodeCnt % HRL_EPISODE_COUNTER) == 0) cout << "[" << this->_episodeCnt << "]" << flush;
-            // Reset the environment for the next episode
-            this->_env.resetStatus();
-        }
     }
     return primActions;
 };
@@ -162,5 +155,17 @@ void HRLDriver::onShutdown(){
 };
 
 void HRLDriver::onRestart(){
-
+    // Update the dynamic task's parameters
+    this->_data.updateParams(this->_rootTask);
+    // Count up the episodes
+    this->_episodeCnt++;
+    // Store the experience once every 500 episodes
+    if((this->_episodeCnt % HRL_BACKUP_EPISODE_CNT) == 0) this->_data.storeExperience(this->_rootTask);
+    // Write out stats
+    this->_data.writeStats();
+    // Output to visualize episodes
+    if((this->_episodeCnt % HRL_EPISODE_MARKER) == 0) cout << "." << flush;
+    if((this->_episodeCnt % HRL_EPISODE_COUNTER) == 0) cout << "[" << this->_episodeCnt << "]" << flush;
+    // Reset the environment for the next episode
+    this->_env.resetStatus();
 };

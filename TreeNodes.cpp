@@ -75,7 +75,7 @@ DynamicTask::DynamicTask(char id, string name, double alphaStart, double gamma, 
 DynamicTask::~DynamicTask(){};
 
 double DynamicTask::_getPseudoReward(DiscreteFeatures& fullFeatures){
-    #ifdef HRL_PR_ENABLED
+    #ifdef __HRL_PR_ENABLED__
         double reward = 0.0;
         switch (this->id) {
           // speedCtrl

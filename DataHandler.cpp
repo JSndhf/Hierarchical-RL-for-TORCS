@@ -127,7 +127,7 @@ bool DataHandler::loadExperience(string srcPath, shared_ptr<Task> taskTree){
         pugi::xml_node xmlTask = n.node();
         // Find the task in the task tree with the same id
         shared_ptr<DynamicTask> task = dynamic_pointer_cast<DynamicTask>(
-              DataHandler::_findTaskInTree(taskTree, (char) xmlTask.attribute("intVal").as_int()));
+              DataHandler::_findTaskInTree(taskTree, (char) xmlTask.attribute("id").as_int()));
         if(task != nullptr){
             // For all child nodes (representing the cvals) insert their values into
             // the tasks cval vector.
@@ -144,7 +144,6 @@ bool DataHandler::loadExperience(string srcPath, shared_ptr<Task> taskTree){
         }
     }
     return true;
-
 }
 
 /***** Gets all dynamic tasks in a task tree and calls their updateParams method ***/

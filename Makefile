@@ -1,13 +1,40 @@
 CC            =  g++
 CPPFLAGS      = -std=c++11 -Wall -g
 
-#Put here the name of your driver class
 DRIVER_CLASS = HRLDriver
-#Put here the filename of your driver class header
 DRIVER_INCLUDE = '"$(DRIVER_CLASS).h"'
 DRIVER_OBJ = $(DRIVER_CLASS).o
 
 EXTFLAGS = -D __DRIVER_CLASS__=$(DRIVER_CLASS) -D __DRIVER_INCLUDE__=$(DRIVER_INCLUDE)
+# Experiment setup
+# Defaults
+episodes = 10000
+alpha = 0.8
+alphaDecay = 0.7/$(episodes)
+epsilon = 0.1
+epsilonDecay = 0.09/$(episodes)
+abstractReward = -10.0
+staticRoot = 1
+staticSpeed = 1
+staticGear = 1
+pseudoRew = 0
+
+EXTFLAGS += -D __HRL_EPISODES__=$(episodes)
+EXTFLAGS += -D __HRL_ALPHA__=$(alpha) -D __HRL_ALPHA_DECAY__=$(alphaDecay)
+EXTFLAGS += -D __HRL_EPSILON__=$(epsilon)  -D __HRL_EPSILON_DECAY__=$(epsilonDecay)
+EXTFLAGS += -D __HRL_ABSTRACT_REWARD__=$(abstractReward)
+ifeq ($(staticRoot), 1)
+EXTFLAGS += -D __HRL_STATIC_ROOT__
+endif
+ifeq ($(staticSpeed), 1)
+EXTFLAGS += -D __HRL_STATIC_SPEED__
+endif
+ifeq ($(staticGear), 1)
+EXTFLAGS += -D __HRL_STATIC_GEAR__
+endif
+ifeq ($(pseudoRew), 1)
+EXTFLAGS += -D __HRL_PR_ENABLED__
+endif
 
 OBJECTS = WrapperBaseDriver.o SimpleParser.o CarState.o CarControl.o DiscreteFeatures.o TreeNodes.o EnvControl.o pugixml.o DataHandler.o $(DRIVER_OBJ)
 

@@ -23,6 +23,7 @@
 #include <cstdio>
 #include <string>
 #include <sstream>
+#include <fstream>
 #include <chrono>
 #include __DRIVER_INCLUDE__
 
@@ -116,6 +117,7 @@ int main(int argc, char *argv[]){
 				cout << "TRAINING MODE: " << mode << endl;
 				cout << "***********************************" << endl;
 		#endif
+
     // Create a socket (UDP on IPv4 protocol)
     socketDescriptor = socket(AF_INET, SOCK_DGRAM, 0);
     if (INVALID(socketDescriptor)){
@@ -132,16 +134,17 @@ int main(int argc, char *argv[]){
 
 		/**** Initialization routine of driver agent ***/														// <----
 		float angles[19];
+
 		d.init(angles, mode, expFilePath);
 		/**** If the learning should start from scratch, delete the data files ****/
 		if(strlen(expFilePath) == 0){
-				system("rm data/*");
+				system("rm -r data/* >/dev/null 2>&1");
 				cout << endl << "*** Starting from scratch - old files deleted. ***" << endl;
 		}
 		if(mode){
-				cout << endl << "********** Begin driving **********" << endl;
+				cout << endl << "********** Begin learning **********" << endl;
 		} else {
-				cout << endl << "********** Begin learning *********" << endl;
+				cout << endl << "********** Begin driving *********" << endl;
 		}
 		/************** ONLY FOR LEARNING MODE **********************************************/
 		if(mode){
@@ -288,7 +291,31 @@ int main(int argc, char *argv[]){
 										#endif
 								}
             } else {
-								if(noRespCnt > 2) break;
+								if(noRespCnt > 4){
+										/****** Something wrong with the server. Shutdown and go to next server. ******/
+										stringstream killCmd;
+										// First force a server shutdown for the current server
+										killCmd << "lsof -i udp:" << serverPort << " | awk 'NR!=1 {print $2}' | xargs kill";
+										#ifndef __COMMUNICATION_VERBOSE__
+												killCmd << ">/dev/null 2>&1 ";		// Surpress output from torcs
+										#endif
+										system(killCmd.str().c_str());
+										// Now open it up again...
+										stringstream reviveCmd;
+										reviveCmd << "torcs -nofuel -nodamage -nolaptime -t 1000000 -r " << HRL_RACECONFIG_BASE << "-" << serverPort << ".xml ";
+										#ifndef __COMMUNICATION_VERBOSE__
+												reviveCmd << ">/dev/null 2>&1 ";		// Surpress output from torcs
+										#endif
+										reviveCmd << "&";	// Immediate return
+										system(reviveCmd.str().c_str());
+										// ... and don't wait for it but go to the next server
+										serverPort++;
+										d.onRestart();
+										#ifdef __COMMUNICATION_VERBOSE__
+												cout << "Client Restart" << endl;
+										#endif
+										break;
+								}
 								#ifdef __COMMUNICATION_VERBOSE__
                 		cout << "** Server did not respond in 1 second.\n";
 								#endif
@@ -369,7 +396,7 @@ void parse_args(int argc, char *argv[], char *hostName, unsigned int &serverPort
 				} else if (strncmp(argv[i], "mode:",5) == 0){
 						sscanf(argv[i],"mode:%ud",&mode);
 						i++;
-				} else if(strncmp(argv[i], "expFilePath:",12)){
+				} else if(strncmp(argv[i], "expFilePath:",12) == 0){
 						sprintf(expFilePath, "%s", argv[i]+12);
 						i++;
 				} else {
