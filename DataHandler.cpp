@@ -135,7 +135,7 @@ bool DataHandler::loadExperience(string srcPath, shared_ptr<Task> taskTree){
                 pugi::xml_node xmlCValNode = c.node();
                 pugi::xpath_node_set cvalSet = xmlCValNode.select_nodes("text()");
                 task->cvals.insert(pair<string, array<double, 2>>(
-                        (string) xmlCValNode.attribute("as").value(),
+                        (string) xmlCValNode.attribute("sa").value(),
                         array<double, 2>
                           {{ cvalSet[HRL_CVAL_POS].node().text().as_double(), cvalSet[HRL_CTILDEVAL_POS].node().text().as_double() }}
                         )
@@ -144,6 +144,19 @@ bool DataHandler::loadExperience(string srcPath, shared_ptr<Task> taskTree){
         }
     }
     return true;
+}
+
+/***** Gets all dynamic tasks in a task tree and prints their experience as table ***/
+void DataHandler::printExperience(shared_ptr<Task> rootTask){
+    vector<shared_ptr<DynamicTask>> dynTasks = this->_getDynamicTasks(rootTask);
+    for(auto const &task : dynTasks){
+        cout << "Task <" << task->name << "> experience: " << endl;
+        for(auto const &cval : task->cvals){
+            cout << "\t" << cval.first << "\t" << cval.second[HRL_CVAL_POS] << "\t" << cval.second[HRL_CTILDEVAL_POS] << endl;
+        }
+        cout << endl;
+    }
+
 }
 
 /***** Gets all dynamic tasks in a task tree and calls their updateParams method ***/

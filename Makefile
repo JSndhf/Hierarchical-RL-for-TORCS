@@ -8,12 +8,12 @@ DRIVER_OBJ = $(DRIVER_CLASS).o
 EXTFLAGS = -D __DRIVER_CLASS__=$(DRIVER_CLASS) -D __DRIVER_INCLUDE__=$(DRIVER_INCLUDE)
 # Experiment setup
 # Defaults
-episodes = 10000
+episodes = 25000
 alpha = 0.8
-alphaDecay = 0.7/$(episodes)
+alphaDecay = 0.000028
 epsilon = 0.1
-epsilonDecay = 0.09/$(episodes)
-abstractReward = -10.0
+epsilonDecay = 0.0000004
+abstractReward = -1000.0
 staticRoot = 1
 staticSpeed = 1
 staticGear = 1

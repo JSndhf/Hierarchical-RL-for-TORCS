@@ -27,7 +27,15 @@
 #define HRL_EPSILON_DECAY           __HRL_EPSILON_DECAY__     /* ((HRL_EPSILON-HRL_EPSILON_END)/HRL_MAX_EPISODES) */
 
 /***** Task config ****/
-/* Done in Makefile */
+#ifdef __HRL_STATIC_ROOT__
+    #define HRL_STATIC_ROOT
+#endif
+#ifdef __HRL_STATIC_SPEED__
+    #define HRL_STATIC_SPEED
+#endif
+#ifdef __HRL_STATIC_GEAR__
+    #define HRL_STATIC_GEAR
+#endif
 
 /***** Rewarding ****/
 #define HRL_DSFACTOR                1

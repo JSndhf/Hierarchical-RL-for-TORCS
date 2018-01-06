@@ -1,35 +1,34 @@
 #!/bin/sh
 
-# The experiment script starts 12 experiments with the
+# The experiment script starts 11 experiments with the
 # following configurations and stores their results in
 # seperate folders:
 #
 #                 |              No.
-# Options         | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
-# alpha=0.7       |   |   |   |   |   |   | x |   |   |    |    |
-# alpha=0.8       | x | x | x | x | x | x |   |   | ? |  ? |  ? |  ?
-# alpha=0.9       |   |   |   |   |   |   |   | x |   |    |    |
-# epsilon=0.1     | x | x | x | x | x | x | x | x |   |  ? |  ? |  ?
-# epsilon=0.2     |   |   |   |   |   |   |   |   | x |    |    |
-# 10k episod.     | x | x | x |   |   |   |   |   |   |    |    |
-# 50k episod.     |   |   |   | x |   | x |   |   |   |    |    |
-# 100k episod.    |   |   |   |   | x |   | ? | ? | ? |  ? |  ? |  ?
-# -10 reward      | x |   |   |   |   |   |   |   |   |    |    |
-# -100 reward     |   | x |   | ? | ? | ? | ? | ? | ? |  ? |  ? |  ?
-# -1000 reward    |   |   | x |   |   |   |   |   |   |    |    |
-# w/o pseudo-rew. | x | x | x | x | x |   |   |   |   |    |    |
-# w/ pseudo-rew.  |   |   |   |   |   | x | ? | ? | ? |  ? |  ? |  ?
-# seq. root       | x | x | x | x | x | x | x | x | x |  x |    |
-# dyn. root       |   |   |   |   |   |   |   |   |   |    |  x |  ?
-# static speed    | x | x | x | x | x | x | x | x | x |    |    |
-# dyn. speed      |   |   |   |   |   |   |   |   |   |  x |  x |  x
-# static gear     | x | x | x | x | x | x | x | x | x |  x |  x |
-# dyn. gear       |   |   |   |   |   |   |   |   |   |    |    |  x
-# from scratch    | x | x | x | x | x | x | x | x | x |    |    |
-# prelearned      |   |   |   |   |   |   |   |   |   |  x |  x |  x
+# Options         | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11
+# alpha=0.7       |   |   |   |   | x |   |   |   |   |    |
+# alpha=0.8       | x | x | x | x |   |   | x | ? | ? |  ? |  ?
+# alpha=0.9       |   |   |   |   |   | x |   |   |   |    |
+# epsilon=0.1     | x | x | x | x | x | x |   | ? | ? |  ? |  ?
+# epsilon=0.2     |   |   |   |   |   |   | x |   |   |    |
+# 10k episod.     | x | x | x |   |   |   |   |   |   |    |
+# 25k episod.     |   |   |   | x | x | x | x | x | x |  x |  x
+# -10 reward      | x |   |   |   |   |   |   |   |   |    |
+# -100 reward     |   | x |   |   |   |   |   |   |   |    |
+# -1000 reward    |   |   | x | x | x | x | x | X | X |  x |  x
+# w/o pseudo-rew. | x | x | x | x | x | x | x |   |   |    |
+# w/ pseudo-rew.  |   |   |   |   |   |   |   | x | ? |  ? |  ?
+# seq. root       | x | x | x | x | x | x | x | x | x |    |
+# dyn. root       |   |   |   |   |   |   |   |   |   |  x |  ?
+# static speed    | x | x | x | x | x | x | x | x |   |    |
+# dyn. speed      |   |   |   |   |   |   |   |   | x |  x |  x
+# static gear     | x | x | x | x | x | x | x | x | x |  x |
+# dyn. gear       |   |   |   |   |   |   |   |   |   |    |  x
+# from scratch    | x | x | x | x | x | x | x | x |   |    |
+# prelearned      |   |   |   |   |   |   |   |   | x |  x |  x
 
 # Because the latter experiments depend on the results of the former,
-# the suite is devided into four sections of three experiments.
+# the suite is devided into several sections (see below).
 # The script needs two arguments, the section to start and the one to end.
 
 # The default agent compilation is:
@@ -38,9 +37,6 @@
 echo "--------------------------------------------"
 echo "-------- HRLDriver experiment suite --------"
 echo "--------------------------------------------\n\n"
-
-# Helping subroutines
-indent() { sed 's/^/\t/'; }
 
 if [ $# -lt 2 ]
   then
@@ -66,7 +62,7 @@ if [ $# -lt 2 ]
             make >/dev/null 2>&1
             echo "- Starting agent..."
             # Run the experiment
-            ./client mode:1 expFilePath:"" | indent
+            ./client mode:1 expFilePath:""
             # Back up the experience and stat files
             mkdir "$RESULTDIR/e1"
             yes | cp -rf "./data/." "./$RESULTDIR/e1"
@@ -80,7 +76,7 @@ if [ $# -lt 2 ]
             make abstractReward=-100.0 >/dev/null 2>&1
             echo "- Starting agent..."
             # Run the experiment
-            ./client mode:1 expFilePath:"" | indent
+            ./client mode:1 expFilePath:""
             # Back up the experience and stat files
             mkdir "$RESULTDIR/e2"
             yes | cp -rf "./data/." "./$RESULTDIR/e2"
@@ -94,7 +90,7 @@ if [ $# -lt 2 ]
             make abstractReward=-1000.0 >/dev/null 2>&1
             echo "- Starting agent..."
             # Run the experiment
-            ./client mode:1 expFilePath:"" | indent
+            ./client mode:1 expFilePath:""
             # Back up the experience and stat files
             mkdir "$RESULTDIR/e3"
             yes | cp -rf "./data/." "./$RESULTDIR/e3"
@@ -105,10 +101,10 @@ if [ $# -lt 2 ]
             # Compile the agent with the specific params
             echo "- Building the agent..."
             make clean >/dev/null 2>&1
-            make episodes=50000 abstractReward=-100.0 >/dev/null 2>&1
+            make episodes=25000 abstractReward=-1000.0 >/dev/null 2>&1
             echo "- Starting agent..."
             # Run the experiment
-            ./client mode:1 expFilePath:"" | indent
+            ./client mode:1 expFilePath:""
             # Back up the experience and stat files
             mkdir "$RESULTDIR/e4"
             yes | cp -rf "./data/." "./$RESULTDIR/e4"
@@ -119,10 +115,10 @@ if [ $# -lt 2 ]
             # Compile the agent with the specific params
             echo "- Building the agent..."
             make clean >/dev/null 2>&1
-            make episodes=100000 abstractReward=-100.0 >/dev/null 2>&1
+            make episodes=25000 alpha=0.7 abstractReward=-1000.0 >/dev/null 2>&1
             echo "- Starting agent..."
             # Run the experiment
-            ./client mode:1 expFilePath:"" | indent
+            ./client mode:1 expFilePath:""
             # Back up the experience and stat files
             mkdir "$RESULTDIR/e5"
             yes | cp -rf "./data/." "./$RESULTDIR/e5"
@@ -133,66 +129,66 @@ if [ $# -lt 2 ]
             # Compile the agent with the specific params
             echo "- Building the agent..."
             make clean >/dev/null 2>&1
-            make episodes=50000 abstractReward=-100.0 pseudoRew=1 >/dev/null 2>&1
+            make episodes=25000 alpha=0.9 abstractReward=-1000.0 >/dev/null 2>&1
             echo "- Starting agent..."
             # Run the experiment
-            ./client mode:1 expFilePath:"" | indent
+            ./client mode:1 expFilePath:""
             # Back up the experience and stat files
             mkdir "$RESULTDIR/e6"
             yes | cp -rf "./data/." "./$RESULTDIR/e6"
             echo "- Results stored. Done.\n\n"
             # END experiment 6 #
-            ;;
-        3)  echo "---- Experiment 7 ----\n"
+
+            echo "---- Experiment 7 ----\n"
             # Compile the agent with the specific params
             echo "- Building the agent..."
             make clean >/dev/null 2>&1
-            make episodes=100000 alpha=0.7 alphaDecay=0.000006 abstractReward=-100.0 pseudoRew=1 >/dev/null 2>&1
+            make episodes=25000 epsilon=0.2 abstractReward=-1000.0 >/dev/null 2>&1
             echo "- Starting agent..."
             # Run the experiment
-            ./client mode:1 expFilePath:"" | indent
+            ./client mode:1 expFilePath:""
             # Back up the experience and stat files
             mkdir "$RESULTDIR/e7"
             yes | cp -rf "./data/." "./$RESULTDIR/e7"
             echo "- Results stored. Done.\n\n"
             # END experiment 7 #
-
-            echo "---- Experiment 8 ----\n"
+	          ;;
+        3)  echo "---- Experiment 8 ----\n"
             # Compile the agent with the specific params
             echo "- Building the agent..."
             make clean >/dev/null 2>&1
-            make episodes=100000 alpha=0.9 alphaDecay=0.000008 abstractReward=-100.0 pseudoRew=1 >/dev/null 2>&1
+            make episodes=25000 abstractReward=-1000.0 pseudoRew=1 >/dev/null 2>&1
             echo "- Starting agent..."
             # Run the experiment
-            ./client mode:1 expFilePath:"" | indent
+            ./client mode:1 expFilePath:""
             # Back up the experience and stat files
             mkdir "$RESULTDIR/e8"
             yes | cp -rf "./data/." "./$RESULTDIR/e8"
             echo "- Results stored. Done.\n\n"
             # END experiment 8 #
-
-            echo "---- Experiment 9 ----\n"
+            ;;
+        4)  echo "---- Experiment 9 ----\n"
             # Compile the agent with the specific params
             echo "- Building the agent..."
             make clean >/dev/null 2>&1
-            make episodes=100000 epsilon=0.2 epsilonDecay=0.0000019 abstractReward=-100.0 pseudoRew=1 >/dev/null 2>&1
+            make episodes=25000 abstractReward=-1000.0 pseudoRew=1 staticSpeed=0 >/dev/null 2>&1
             echo "- Starting agent..."
             # Run the experiment
-            ./client mode:1 expFilePath:"" | indent
+            ./client mode:1 expFilePath:"data/HRLDriverData.xml"
             # Back up the experience and stat files
             mkdir "$RESULTDIR/e9"
             yes | cp -rf "./data/." "./$RESULTDIR/e9"
             echo "- Results stored. Done.\n\n"
             # END experiment 9 #
-            ;;
-        4)  echo "---- Experiment 10 ----\n"
+
+            echo "---- Experiment 10 ----\n"
             # Compile the agent with the specific params
             echo "- Building the agent..."
             make clean >/dev/null 2>&1
-            make episodes=100000 abstractReward=-100.0 pseudoRew=1 staticSpeed=0 >/dev/null 2>&1
+            make episodes=25000 abstractReward=-1000.0 pseudoRew=1 staticSpeed=0 staticGear=0 >/dev/null 2>&1
             echo "- Starting agent..."
             # Run the experiment
-            ./client mode:1 expFilePath:"data/HRLDriverData.xml" | indent
+            ./client mode:1 expFilePath:"data/HRLDriverData.xml"
             # Back up the experience and stat files
             mkdir "$RESULTDIR/e10"
             yes | cp -rf "./data/." "./$RESULTDIR/e10"
@@ -203,29 +199,15 @@ if [ $# -lt 2 ]
             # Compile the agent with the specific params
             echo "- Building the agent..."
             make clean >/dev/null 2>&1
-            make episodes=100000 abstractReward=-100.0 pseudoRew=1 staticRoot=0 staticSpeed=0 >/dev/null 2>&1
+            make episodes=25000 abstractReward=-1000.0 pseudoRew=1 staticRoot=0 staticSpeed=0 staticGear=0 >/dev/null 2>&1
             echo "- Starting agent..."
             # Run the experiment
-            ./client mode:1 expFilePath:"data/HRLDriverData.xml" | indent
+            ./client mode:1 expFilePath:"data/HRLDriverData.xml"
             # Back up the experience and stat files
             mkdir "$RESULTDIR/e11"
             yes | cp -rf "./data/." "./$RESULTDIR/e11"
             echo "- Results stored. Done.\n\n"
             # END experiment 11 #
-
-            echo "---- Experiment 12 ----\n"
-            # Compile the agent with the specific params
-            echo "- Building the agent..."
-            make clean >/dev/null 2>&1
-            make episodes=100000 abstractReward=-100.0 pseudoRew=1 staticRoot=0 staticSpeed=0 staticGear=0 >/dev/null 2>&1
-            echo "- Starting agent..."
-            # Run the experiment
-            ./client mode:1 expFilePath:"data/HRLDriverData.xml" | indent
-            # Back up the experience and stat files
-            mkdir "$RESULTDIR/e12"
-            yes | cp -rf "./data/." "./$RESULTDIR/e12"
-            echo "- Results stored. Done.\n\n"
-            # END experiment 12 #
             ;;
       esac
       CURRSEC=$((CURRSEC + 1))

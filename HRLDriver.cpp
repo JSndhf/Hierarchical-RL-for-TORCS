@@ -73,17 +73,17 @@ void HRLDriver::init(float *angles, unsigned int mode, string expFilePath){
     this->_episodeCnt = 0;
     // Check whether the dynamic tasks should be fed with stored experience
     if(strlen(expFilePath.c_str()) != 0){
-        #ifdef HRL_DEBUG
-            cout << "Including stored experience..." << endl;
-        #endif
+        cout << "Including stored experience..." << endl;
         // Check if the file can be found
         if(access( expFilePath.c_str(), F_OK ) != -1){
             // Load the experience
             this->_data.loadExperience(expFilePath, this->_rootTask);
-        } else {
             #ifdef HRL_DEBUG
-                cout << "Error: Cannot access the experience file. " << endl;
+                // For debugging, print out the experience
+                this->_data.printExperience(this->_rootTask);
             #endif
+        } else {
+                cout << "Error: Cannot access the experience file. " << endl;
         }
     }
 };
