@@ -36,6 +36,9 @@
 #ifdef __HRL_STATIC_GEAR__
     #define HRL_STATIC_GEAR
 #endif
+#ifdef __HRL_STATIC_STEER__
+    #define HRL_STATIC_STEER
+#endif
 
 /***** Rewarding ****/
 #define HRL_DSFACTOR                1

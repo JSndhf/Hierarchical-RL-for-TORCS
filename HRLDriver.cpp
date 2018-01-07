@@ -32,7 +32,11 @@ HRLDriver::HRLDriver():
     gearCtrl->children.push_back(neutral);
     gearCtrl->children.push_back(downshift);
     root->children.push_back(gearCtrl);
-    shared_ptr<Task> steeringCtrl = make_shared<DynamicTask>(3, "steeringCtrl", HRL_ALPHA_START, HRL_GAMMA, HRL_EPSILON, 5);
+    #ifdef HRL_STATIC_STEER
+        shared_ptr<Task> steeringCtrl = make_shared<StaticSteeringControl>(3);
+    #else
+        shared_ptr<Task> steeringCtrl = make_shared<DynamicTask>(3, "steeringCtrl", HRL_ALPHA_START, HRL_GAMMA, HRL_EPSILON, 5);
+    #endif
     shared_ptr<Task> s1 = make_shared<PrimitiveAction>(10, "left 0.5");
     shared_ptr<Task> s2 = make_shared<PrimitiveAction>(11, "left 0.1");
     shared_ptr<Task> s3 = make_shared<PrimitiveAction>(12, "neutral");

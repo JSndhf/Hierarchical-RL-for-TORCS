@@ -384,7 +384,7 @@ shared_ptr<Task> StaticSpeedControl::getActionSelection(DiscreteFeatures& fullFe
     for(unsigned int tsk = 0; tsk < allowedActions.size(); tsk++){
         if(allowedActions[tsk]->id == actionId) nextAction = allowedActions[tsk];
     }
-    // If the last executed action cannot be found, execute a random action of the allowed ones.
+    // If the last executed action cannot be found, execute the first action of the allowed ones.
     if(nextAction == nullptr) nextAction = allowedActions[0];
 
     return nextAction;
@@ -444,5 +444,42 @@ shared_ptr<Task> StaticGearControl::getActionSelection(DiscreteFeatures& fullFea
     for(unsigned int itm = 0; itm < allowedActions.size(); itm++){
         if(allowedActions[itm]->id == aID) nextAction = allowedActions[itm];
     }
+    return nextAction;
+};
+
+/*** Static steering control ***/
+StaticSteeringControl::StaticSteeringControl(char id){
+    this->id = id; this->name = "StaticSteeringControl"; this->isPrimitive = false; this->isStatic = true;
+}
+StaticSteeringControl::~StaticSteeringControl(){};
+/* Implements the fixed strategy */
+shared_ptr<Task> StaticSteeringControl::getActionSelection(DiscreteFeatures& fullFeatures, vector<shared_ptr<Task>>& allowedActions, bool exploitOnly){
+    // The steering is simply based on the curvature:
+    //    <-22.5deg         (CL7 ... CL5):  left 0.5 <10>
+    //    -22.5deg - -6deg  (CL4 ... CL2):  left 0.1 <11>
+    //    -6deg - 6deg      (CL1 ... CR1 ): no steering <12>
+    //    6deg - 22.5deg    (CR2 ... CR4):  right 0.1 <13>
+    //    >22.5deg          (CR5 ... CR7):  right 0.5 <14>
+    shared_ptr<Task> nextAction = nullptr;
+    char actionId;
+    if((int)fullFeatures.curvature <= (int)DiscreteFeatures::curvature_t::CL5){
+        actionId = 10; // left 0.5
+    } else if((int)fullFeatures.curvature <= (int)DiscreteFeatures::curvature_t::CL2){
+        actionId = 11; // left 0.1
+    } else if((int)fullFeatures.curvature <= (int)DiscreteFeatures::curvature_t::CR1){
+        actionId = 12; // no steering
+    } else if((int)fullFeatures.curvature <= (int)DiscreteFeatures::curvature_t::CR4){
+        actionId = 13; // right 0.1
+    } else {
+        actionId = 14; // right 0.5
+    }
+
+    // Check if the chosen action is allowed
+    for(unsigned int tsk = 0; tsk < allowedActions.size(); tsk++){
+        if(allowedActions[tsk]->id == actionId) nextAction = allowedActions[tsk];
+    }
+    // If the last executed action cannot be found, execute the first action of the allowed ones.
+    if(nextAction == nullptr) nextAction = allowedActions[0];
+
     return nextAction;
 };

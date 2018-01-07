@@ -17,6 +17,7 @@ abstractReward = -1000.0
 staticRoot = 1
 staticSpeed = 1
 staticGear = 1
+staticSteer = 0
 pseudoRew = 0
 
 EXTFLAGS += -D __HRL_EPISODES__=$(episodes)
@@ -31,6 +32,9 @@ EXTFLAGS += -D __HRL_STATIC_SPEED__
 endif
 ifeq ($(staticGear), 1)
 EXTFLAGS += -D __HRL_STATIC_GEAR__
+endif
+ifeq ($(staticSteer), 1)
+EXTFLAGS += -D __HRL_STATIC_STEER__
 endif
 ifeq ($(pseudoRew), 1)
 EXTFLAGS += -D __HRL_PR_ENABLED__

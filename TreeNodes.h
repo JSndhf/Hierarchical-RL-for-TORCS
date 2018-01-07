@@ -144,6 +144,15 @@ class StaticGearControl: public Task {
     virtual ~StaticGearControl();
     virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&, bool);
 };
+/*** Static steering control ***/
+class StaticSteeringControl: public Task {
+  public:
+    /* Constructor */
+    StaticSteeringControl(char);
+    /* Destructor */
+    virtual ~StaticSteeringControl();
+    virtual shared_ptr<Task> getActionSelection(DiscreteFeatures&, vector<shared_ptr<Task>>&, bool);
+};
 
 #endif /*TREENODES_H_*/
 /***************************************************************************
