@@ -378,8 +378,8 @@ shared_ptr<Task> StaticSpeedControl::getActionSelection(DiscreteFeatures& fullFe
     // Accelerate until 30kmh and hold this speed constant.
     shared_ptr<Task> nextAction = nullptr;
     char actionId;
-    // Always accelerate, only on sharp turns break.
-    /* if(fullFeatures.curvature > DiscreteFeatures::curvature_t::CL4
+    // Allways accelerate, only on sharp turns break.
+    if(fullFeatures.curvature > DiscreteFeatures::curvature_t::CL4
         && fullFeatures.curvature < DiscreteFeatures::curvature_t::CR4){
             actionId = 4;
     } else if(fullFeatures.curvature > DiscreteFeatures::curvature_t::CL6
@@ -387,13 +387,13 @@ shared_ptr<Task> StaticSpeedControl::getActionSelection(DiscreteFeatures& fullFe
             actionId = 5;
     } else {
             actionId = 6;
-    } */
-    if((int)fullFeatures.speed < (int)DiscreteFeatures::speed_t::V6){
-        // Speed under 75kmh --> accelerate
+    }
+    /*if((int)fullFeatures.speed < (int)DiscreteFeatures::speed_t::V6){
+        // Speed under 50kmh --> accelerate
         actionId = 4;
     } else {
         actionId = 5;
-    }
+    } */
 
 
     for(unsigned int tsk = 0; tsk < allowedActions.size(); tsk++){

@@ -5,27 +5,28 @@
 # seperate folders:
 #
 #                 |              No.
-# Options         | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11
-# alpha=0.7       |   |   |   |   | x |   |   |   |   |    |
-# alpha=0.8       | x | x | x | x |   |   | x | ? | ? |  ? |  ?
-# alpha=0.9       |   |   |   |   |   | x |   |   |   |    |
-# epsilon=0.1     | x | x | x | x | x | x |   | ? | ? |  ? |  ?
-# epsilon=0.2     |   |   |   |   |   |   | x |   |   |    |
-# 10k episod.     | x | x | x |   |   |   |   |   |   |    |
-# 25k episod.     |   |   |   | x | x | x | x | x | x |  x |  x
-# -10 reward      | x |   |   |   |   |   |   |   |   |    |
-# -100 reward     |   | x |   |   |   |   |   |   |   |    |
-# -1000 reward    |   |   | x | x | x | x | x | X | X |  x |  x
-# w/o pseudo-rew. | x | x | x | x | x | x | x |   |   |    |
-# w/ pseudo-rew.  |   |   |   |   |   |   |   | x | ? |  ? |  ?
-# seq. root       | x | x | x | x | x | x | x | x | x |    |
-# dyn. root       |   |   |   |   |   |   |   |   |   |  x |  ?
-# static speed    | x | x | x | x | x | x | x | x |   |    |
-# dyn. speed      |   |   |   |   |   |   |   |   | x |  x |  x
-# static gear     | x | x | x | x | x | x | x | x | x |  x |
-# dyn. gear       |   |   |   |   |   |   |   |   |   |    |  x
-# from scratch    | x | x | x | x | x | x | x | x |   |    |
-# prelearned      |   |   |   |   |   |   |   |   | x |  x |  x
+# Options         | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13
+# alpha=0.7       |   |   |   |   | x |   |   |   |   |    |    |    |   
+# alpha=0.8       | x | x | x | x |   |   | x | x | x |  x |  x |  x |  x
+# alpha=0.9       |   |   |   |   |   | x |   |   |   |    |    |    |   
+# epsilon=0.1     | x | x | x | x | x | x |   | x | x |  x |  x |  x |  x
+# epsilon=0.2     |   |   |   |   |   |   | x |   |   |    |    |    |   
+# 10k episod.     | x | x | x |   |   |   |   |   |   |    |    |    |   
+# 25k episod.     |   |   |   | x | x | x | x | x | x |  x |  x |  x |  x
+# -10 reward      | x |   |   |   |   |   |   |   |   |    |    |    |   
+# -100 reward     |   | x |   |   |   |   |   |   |   |    |    |    |   
+# -1000 reward    |   |   | x | x | x | x | x | X | X |  x |  x |  x |  x
+# w/o pseudo-rew. | x | x | x | x | x | x | x |   |   |    |  x |  x |  x
+# w/ pseudo-rew.  |   |   |   |   |   |   |   | x | x |  x |    |    |   
+# seq. root       | x | x | x | x | x | x | x | x | x |    |    |  x |  x
+# dyn. root       |   |   |   |   |   |   |   |   |   |  x |  x |    |   
+# static speed    | x | x | x | x | x | x | x | x |   |    |    |  x |  x
+# dyn. speed      |   |   |   |   |   |   |   |   | x |  x |  x |    |   
+# static gear     | x | x | x | x | x | x | x | x | x |  x |    |  x |   
+# dyn. gear       |   |   |   |   |   |   |   |   |   |    |  x |    |  x
+# static steer    |   |   |   |   |   |   |   |   |   |    |    |    |   
+# from scratch    | x | x | x | x | x | x | x | x |   |    |    |  x |  x
+# prelearned      |   |   |   |   |   |   |   |   | x |  x |  x |    |   
 
 # Because the latter experiments depend on the results of the former,
 # the suite is devided into several sections (see below).
@@ -209,6 +210,34 @@ if [ $# -lt 2 ]
             echo "- Results stored. Done.\n\n"
             # END experiment 11 #
             ;;
+	5)  echo "---- Experiment 12 ----\n"
+            # Compile the agent with the specific params
+            echo "- Building the agent..."
+            make clean >/dev/null 2>&1
+            make episodes=25000 abstractReward=-1000.0 staticSteer=1 staticSpeed=0 >/dev/null 2>&1
+            echo "- Starting agent..."
+            # Run the experiment
+            ./client mode:1 expFilePath:""
+            # Back up the experience and stat files
+            mkdir "$RESULTDIR/e12"
+            yes | cp -rf "./data/." "./$RESULTDIR/e12"
+            echo "- Results stored. Done.\n\n"
+            # END experiment 12 #
+
+	    echo "---- Experiment 13 ----\n"
+            # Compile the agent with the specific params
+            echo "- Building the agent..."
+            make clean >/dev/null 2>&1
+            make episodes=25000 abstractReward=-1000.0 staticSteer=1 staticGear=0 >/dev/null 2>&1
+            echo "- Starting agent..."
+            # Run the experiment
+            ./client mode:1 expFilePath:""
+            # Back up the experience and stat files
+            mkdir "$RESULTDIR/e13"
+            yes | cp -rf "./data/." "./$RESULTDIR/e13"
+            echo "- Results stored. Done.\n\n"
+            # END experiment 13 #
+	    ;;
       esac
       CURRSEC=$((CURRSEC + 1))
     done
