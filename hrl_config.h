@@ -11,7 +11,7 @@
 /***** Server configuration ****/
 #define HRL_DEFAULT_SERVERPORT      3001
 #define HRL_MAX_SERVERPORT          3009
-#define HRL_RACECONFIG_BASE         "/home/josch/Schreibtisch/HReinforcementLearning/hrlAgent/raceconfig/practice"
+#define HRL_RACECONFIG_BASE         "/home/usr0/Schreibtisch/HRL/hrlAgent/raceconfig/practice"
 
 /***** Parameters for termination control ****/
 #define HRL_STUCK_MAX_GAMETICKS     50
@@ -33,6 +33,9 @@
 #ifdef __HRL_STATIC_SPEED__
     #define HRL_STATIC_SPEED
 #endif
+#ifdef __HRL_NO_BREAK_POLICY__
+    #define HRL_NO_BREAK_POLICY
+#endif
 #ifdef __HRL_STATIC_GEAR__
     #define HRL_STATIC_GEAR
 #endif
@@ -45,10 +48,11 @@
 #define HRL_TERMINATE_NEGREWARD     __HRL_ABSTRACT_REWARD__
 /* Pseudo-rewards */
 //If __HRL_PR_ENABLED__ gets defined by makefile
-#define HRL_PR_STEER_NEAROUT        -10.0
-#define HRL_PR_STEER_OUT            -100.0
-#define HRL_PR_SPEED_SLOW           -10.0
-#define HRL_PR_SPEED_FAST           10.0
+#define HRL_PR_STEER_NEAROUT        -100.0
+#define HRL_PR_STEER_OUT            -1000.0
+#define HRL_PR_SPEED_STANDING       -100.0
+#define HRL_PR_SPEED_ACCEL           100.0
+#define HRL_PR_SPEED_FAST	     1000.0
 
 
 /***** Data handling ****/

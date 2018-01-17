@@ -16,6 +16,7 @@ epsilonDecay = 0.0000004
 abstractReward = -1000.0
 staticRoot = 1
 staticSpeed = 1
+noBreakPolicy = 0
 staticGear = 1
 staticSteer = 0
 pseudoRew = 0
@@ -29,6 +30,9 @@ EXTFLAGS += -D __HRL_STATIC_ROOT__
 endif
 ifeq ($(staticSpeed), 1)
 EXTFLAGS += -D __HRL_STATIC_SPEED__
+endif
+ifeq ($(noBreakPolicy), 1)
+EXTFLAGS += -D __HRL_NO_BREAK_POLICY__
 endif
 ifeq ($(staticGear), 1)
 EXTFLAGS += -D __HRL_STATIC_GEAR__

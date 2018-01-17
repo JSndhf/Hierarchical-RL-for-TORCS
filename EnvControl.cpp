@@ -127,6 +127,10 @@ vector<shared_ptr<Task>> EnvControl::getAllowedActions(shared_ptr<Task> task, Di
                 if(fullFeatures.speed == DiscreteFeatures::speed_t::V14 && a->id == 4) continue;
                 // No breaking if already standing still
                 if(fullFeatures.speed == DiscreteFeatures::speed_t::V0 && a->id == 6) continue;
+		// If learning to accelerate, do not allow to break first
+		#ifdef HRL_NO_BREAK_POLICY
+		    if(a->id == 6) continue;
+		#endif
                 // else
                 aAllowed.push_back(a);
             }
